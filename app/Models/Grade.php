@@ -6,13 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 
 
 /**
- * 分销用户关系表
- * Class UserTree
+ * 等级配置表
+ * Class Grade
  * @package App\Models
  */
-class UserTree extends Model
+class Grade extends Model
 {
-    protected $table = "pytao_user_tree";
+    protected $table = "pytao_grade";
     protected $guarded = ['id'];
     public $timestamps = false;
 

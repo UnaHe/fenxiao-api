@@ -7,6 +7,7 @@
  */
 namespace App\Services;
 
+use App\Events\RegisterUserEvent;
 use App\Helpers\BaseConvert;
 use App\Models\SystemPids;
 use App\Models\UserLoginToken;
@@ -88,6 +89,8 @@ class UserService
 
             //创建用户邀请码
             (new UserReferralCode())->createCode($userId);
+
+            event(new RegisterUserEvent($newUser));
 
             DB::commit();
         }catch (\Exception $e){

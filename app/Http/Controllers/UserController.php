@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\RegisterUserEvent;
 use App\Helpers\UrlHelper;
+use App\Models\User;
 use App\Services\CaptchaService;
 use App\Services\UserService;
 use Illuminate\Http\Request;
