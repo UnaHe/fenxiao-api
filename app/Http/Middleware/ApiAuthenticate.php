@@ -60,7 +60,7 @@ class ApiAuthenticate
         $token = Cookie::get('token')?:$request->header('token');
         $token = $token ?: $request->input('token');
         if (!$token){
-            throw new AuthenticationException('Unauthenticated.', $guards);
+            $this->errorResponse($request, $guards);
         }
 
         $user = (new UserService())->checkLoginToken($token);
@@ -72,6 +72,24 @@ class ApiAuthenticate
             return;
         }
 
-        throw new AuthenticationException('Unauthenticated.', $guards);
+        $this->errorResponse($request, $guards);
+    }
+
+    /**
+     * 错误返回
+     * @param  \Illuminate\Http\Request  $request
+     * @param  array  $guards
+     * @throws AuthenticationException
+     */
+    protected function errorResponse($request, $guards){
+        if(in_array("force", $guards)){
+            throw new AuthenticationException('Unauthenticated.', $guards);
+        }else{
+            $request->setUserResolver(function(){
+                return new class(){
+                    public $id = 0;
+                };
+            });
+        }
     }
 }

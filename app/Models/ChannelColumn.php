@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class ChannelColumn extends Model
 {
+    protected $connection = "pytdb";
     protected $table = "xmt_channel_column";
     protected $guarded = ['id'];
 

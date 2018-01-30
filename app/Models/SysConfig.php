@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class SysConfig extends Model
 {
-    protected $table = "xmt_sys_config";
+    protected $table = "pytao_sys_config";
     protected $guarded = ['id'];
 
 }

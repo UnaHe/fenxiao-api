@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class GoodsCategory extends Model
 {
+    protected $connection = "pytdb";
     protected $table = "xmt_goods_category";
     protected $guarded = ['id'];
 

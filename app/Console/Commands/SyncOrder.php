@@ -14,7 +14,7 @@ class SyncOrder extends Command
      *
      * @var string
      */
-    protected $signature = 'sync_order {--from_date=} {--to_date=}';
+    protected $signature = 'sync_order {--from_time=} {--to_time=}';
 
     /**
      * The console command description.
@@ -42,11 +42,11 @@ class SyncOrder extends Command
     {
         $nowDate = Carbon::now()->toDateString();
         //同步开始日期
-        $fromDate = $this->option('from_date') ?: $nowDate;
+        $fromTime = $this->option('from_time') ?: $nowDate;
         //同步结束日期
-        $toDate = $this->option('to_date') ?: $nowDate;
+        $toTime = $this->option('to_time') ?: $nowDate;
 
-        $downloadUrl = "http://pub.alimama.com/report/getTbkPaymentDetails.json?queryType=1&payStatus=&DownloadID=DOWNLOAD_REPORT_INCOME_NEW&startTime={$fromDate}&endTime={$toDate}";
+        $downloadUrl = "http://pub.alimama.com/report/getTbkPaymentDetails.json?queryType=1&payStatus=&DownloadID=DOWNLOAD_REPORT_INCOME_NEW&startTime={$fromTime}&endTime={$toTime}";
 
         $cookie = $this->getCookie();
         if(!$cookie){
@@ -63,7 +63,7 @@ class SyncOrder extends Command
         if(!is_dir($dir)){
             @mkdir($dir);
         }
-        $file = $dir."/order_".$fromDate."_".$toDate."_".time().".xls";
+        $file = $dir."/order_".time().mt_rand(1000, 9999).".xls";
         $client->get($downloadUrl, ['save_to' => $file]);
 
 //        $file = storage_path("download/1.xls");

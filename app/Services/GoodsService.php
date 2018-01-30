@@ -17,6 +17,7 @@ use App\Models\ColumnGoodsRel;
 use App\Models\Goods;
 use App\Models\TaobaoToken;
 use Carbon\Carbon;
+use function foo\func;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -65,21 +66,13 @@ class GoodsService
 
     /**
      * 获取商品列表
-     * @param $category 分类
-     * @param $sort 排序
-     * @param $keyword 关键字
-     * @param int $isTaoqianggou 是否淘抢购
-     * @param int $isJuhuashuan 是否聚划算
-     * @return \Illuminate\Database\Eloquent\Collection|static[]
+     * @param array $queryParams 查询条件
+     * @param string $scrollId es滚动id
+     * @param int $userId 用户id
+     * @return array
      */
-    public function goodList($category, $sort, $keyword, $isTaoqianggou, $isJuhuashuan, $minPrice, $maxPrice, $isTmall, $minCommission, $minSellNum, $minCouponPrice, $maxCouponPrice, $isJpseller, $isQjd, $isHaitao, $isJyj, $isYfx, $userId){
+    public function goodList($queryParams, $sort, $page, $limit, $scrollId, $userId){
         $sortVal = $this->sort($sort);
-        $request = app('request');
-        //分页参数
-        $page = $request->input("page");
-        $page = $page ?: 1;
-        $limit = $request->input("limit");
-        $limit = $limit ?: 20;
 
         if($page == 1){
             $filters = [];
@@ -99,15 +92,17 @@ class GoodsService
                 ]
             ];
 
-            if($category){
+            if($category = UtilsHelper::arrayValue($queryParams, 'category')){
                 $filters[] = ['term'=>['catagory_id' => $category]];
             }
-            if($isTaoqianggou){
+            if($isTaoqianggou = UtilsHelper::arrayValue($queryParams, 'isTaoqianggou')){
                 $filters[] = ['term'=>['is_taoqianggou' => 1]];
             }
-            if($isJuhuashuan){
+            if($isJuhuashuan = UtilsHelper::arrayValue($queryParams, 'isJuhuashuan')){
                 $filters[] = ['term'=>['is_juhuashuan' => 1]];
             }
+            $minPrice = UtilsHelper::arrayValue($queryParams, 'minPrice');
+            $maxPrice = UtilsHelper::arrayValue($queryParams, 'maxPrice');
             if($minPrice || $maxPrice){
                 $priceData = [];
                 if($minPrice){
@@ -119,20 +114,22 @@ class GoodsService
                 $filters[] = ['range'=>['price' => $priceData]];
             }
 
-            if($isTmall){
+            if($isTmall = UtilsHelper::arrayValue($queryParams, 'isTmall')){
                 $filters[] = ['term'=>['is_tmall' => 1]];
             }
-            if($minCommission){
+            if($minCommission = UtilsHelper::arrayValue($queryParams, 'minCommission')){
                 $filters[] = ['range'=>['commission' => ['gte'=>$minCommission]]];
             }else{
                 $filters[] = ['range'=>['commission' => ['gt'=>0]]];
             }
 
-            if($minSellNum){
+            if($minSellNum = UtilsHelper::arrayValue($queryParams, 'minSellNum')){
                 $filters[] = ['range'=>['sell_num' => ['gte'=>$minSellNum]]];
             }
 
 
+            $minCouponPrice = UtilsHelper::arrayValue($queryParams, 'minCouponPrice');
+            $maxCouponPrice = UtilsHelper::arrayValue($queryParams, 'maxCouponPrice');
             if($minCouponPrice || $maxCouponPrice){
                 $couponPriceData = [];
                 if($minCouponPrice){
@@ -145,15 +142,15 @@ class GoodsService
             }
 
             //金牌卖家
-            if($isJpseller){
+            if($isJpseller = UtilsHelper::arrayValue($queryParams, 'isJpseller')){
                 $filters[] = ['term'=>['is_jpseller' => 2]];
             }
             //旗舰店
-            if($isQjd){
+            if($isQjd = UtilsHelper::arrayValue($queryParams, 'isQjd')){
                 $filters[] = ['term'=>['is_qjd' => 2]];
             }
             //海淘
-            if($isHaitao){
+            if($isHaitao = UtilsHelper::arrayValue($queryParams, 'isHaitao')){
                 $filters[] = [
                     'bool' => [
                         'should' => [
@@ -164,10 +161,11 @@ class GoodsService
                 ];
             }
             //极有家
-            if($isJyj){
+            if($isJyj = UtilsHelper::arrayValue($queryParams, 'isJyj')){
                 $filters[] = ['term'=>['is_jyjseller' => 2]];
             }
-            if($isYfx){
+            //运费险
+            if($isYfx = UtilsHelper::arrayValue($queryParams, 'isYfx')){
                 $filters[] = ['term'=>['is_freight_insurance' => 2]];
             }
 
@@ -186,7 +184,7 @@ class GoodsService
             ];
 
             //搜索关键词
-            if($keyword){
+            if($keyword = UtilsHelper::arrayValue($queryParams, 'keyword')){
                 $esParams['body']['query']['bool']['must'] = [
                     'match' => [
                         'title' => [
@@ -203,27 +201,28 @@ class GoodsService
             }
 
             $esHelper = new EsHelper();
-            $results = $esHelper->search($esParams);
-            CacheHelper::setCache($esHelper->getScrollId(), 15);
-            return $results;
+            return [
+                'data' => $esHelper->search($esParams),
+                'scroll_id' => $esHelper->getScrollId()
+            ];
         }else{
             $results = [];
             try{
-                $scrollId = CacheHelper::getCache();
                 if($scrollId){
                     $results = (new EsHelper())->scroll([
                         'scroll_id' => $scrollId,
                         'scroll' => "15m"
                     ]);
-                    CacheHelper::setCache($scrollId, 15);
                 }
-                return $results;
+                return [
+                    'data' => $results,
+                    'scroll_id' => $scrollId
+                ];
             }catch (\Exception $e){
             }
 
             return $results;
         }
-
     }
 
     /**
@@ -457,25 +456,6 @@ class GoodsService
         //销量
         $templateData['sell_num'] = isset($shareData['sell_num']) ? $shareData['sell_num'] : 0;
 
-        //朋友淘分享地址
-        if(strpos($shareDesc, "{pytao_url}") !== false){
-            $templateData['pytao_url'] = "";
-
-            $user = app("request")->user();
-            if($user){
-                // 获取当前用户邀请码.
-                $code = $user->invite_code;
-                $cacheKey = "pytao_url_".$code;
-                if(!$shortUrl = CacheHelper::getCache($cacheKey)){
-                    // 拼接邀请链接.
-                    $longUrl = 'http://'.config('domains.pytao_domains').'/pytao/share/'.$code;
-                    // 短链接.
-                    $shortUrl = (new UrlHelper())->shortUrl($longUrl);
-                    CacheHelper::setCache($shortUrl, 5, $cacheKey);
-                }
-                $templateData['pytao_url'] = $shortUrl;
-            }
-        }
 
         foreach ($templateData as $name=>$value){
             $shareDesc = str_replace('{'.$name.'}', $value, $shareDesc);

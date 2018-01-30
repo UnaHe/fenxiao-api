@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Goods extends Model
 {
+    protected $connection = "pytdb";
     protected $table = "xmt_goods_lib";
     protected $guarded = ['id'];
     public $timestamps = false;

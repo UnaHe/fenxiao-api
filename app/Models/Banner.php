@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Banner extends Model
 {
-    protected $table = "xmt_banner";
+    protected $table = "pytao_banner";
     protected $guarded = ['id'];
 
 }

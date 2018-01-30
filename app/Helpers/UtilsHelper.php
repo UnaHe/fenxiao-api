@@ -10,6 +10,17 @@ namespace App\Helpers;
 class UtilsHelper
 {
     /**
+     * 数组值
+     * @param $array
+     * @param $key
+     * @param null $default
+     * @return null
+     */
+    public static function arrayValue($array, $key, $default=null){
+        return isset($array[$key]) ? $array[$key] : $default;
+    }
+
+    /**
      * 二维数组根据字段进行排序
      * @params array $array 需要排序的数组
      * @params string $field 排序的字段

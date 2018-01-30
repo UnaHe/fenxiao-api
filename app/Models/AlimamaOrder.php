@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class AlimamaOrder extends Model
 {
-    protected $table = "xmt_alimama_order";
+    protected $table = "pytao_alimama_order";
     protected $guarded = ['id'];
     public $timestamps = false;
 }

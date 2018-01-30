@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class ColumnGoodsRel extends Model
 {
+    protected $connection = "pytdb";
     protected $table = "xmt_column_goods_rel";
     protected $guarded = ['id'];
 

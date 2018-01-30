@@ -6,11 +6,6 @@
 Route::namespace('App\Http\Controllers')->group(function (){
 
     /**
-     * WAP自动登录.
-     */
-    Route::get('/share/{code}/{redirect?}', "Auth\AccessTokenController@Login");
-
-    /**
      * 需要登录访问的接口列表
      */
     Route::middleware('pytao')->group(function(){
