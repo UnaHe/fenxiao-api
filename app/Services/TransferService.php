@@ -93,37 +93,6 @@ class TransferService
 
 
     /**
-     * 高效转链
-     * @param $taobaoGoodsId
-     * @param $userId
-     * @return \Illuminate\Cache\CacheManager|mixed
-     * @throws \Exception
-     */
-    public function transferLinkByUser($taobaoGoodsId, $userId){
-        if($cache = CacheHelper::getCache()){
-            return $cache;
-        }
-
-        $token = (new TaobaoService())->getToken($userId);
-        $pid = (new TaobaoService())->getPid($userId);
-        if(!$token){
-            throw new \Exception("未授权", ErrorHelper::ERROR_TAOBAO_INVALID_SESSION);
-        }
-        if(!$pid){
-            throw new \Exception("PID错误", ErrorHelper::ERROR_TAOBAO_INVALID_PID);
-        }
-        try{
-            $result = $this->transferLink($taobaoGoodsId, $pid, $token);
-        }catch (\Exception $e){
-            throw new \Exception($e->getMessage(), $e->getCode());
-        }
-
-        CacheHelper::setCache($result, 5);
-        return $result;
-    }
-
-
-    /**
      * 淘宝短链接sclick转换
      * @param $url 原始url
      * @return mixed
@@ -204,15 +173,15 @@ class TransferService
         }
 
         try{
-            $token = (new TaobaoService())->getToken($userId);
-            $pid = (new TaobaoService())->getPid($userId);
+            $pidInfo = (new UserService())->getPidInfo($userId);
+            $token = (new TaobaoTokenService())->getToken($pidInfo['member_id']);
             if(!$token){
-                throw new \Exception("未授权", ErrorHelper::ERROR_TAOBAO_INVALID_SESSION);
+                throw new \Exception("未授权");
             }
-            if(!$pid){
-                throw new \Exception("PID错误", ErrorHelper::ERROR_TAOBAO_INVALID_PID);
+            if(!$pidInfo){
+                throw new \Exception("PID错误");
             }
-            $data = $this->transferGoods($goodsId, $couponId, $title, $pic, $pid, $token);
+            $data = $this->transferGoods($goodsId, $couponId, $title, $pic, $pidInfo['pid'], $token);
 
             $goodsInfo = [
                 'goods_id' => $goodsId,

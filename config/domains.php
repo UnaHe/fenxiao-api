@@ -7,10 +7,6 @@
  * Time: 15:02
  */
 
-//去除前后可能出现的逗号
-$domainConfig = trim(env('WECHAT_DOMAINS'), ',');
-$domains = explode(',', $domainConfig);
-
 return [
     /**
      * api域名
@@ -20,10 +16,6 @@ return [
      * 重定向域名
      */
     'redirect_domain' => env('REDIRECT_DOMAIN'),
-    /**
-     * 微信单页域名列表
-     */
-    'wechat_domains' => $domains,
     /**
      * 朋友淘域名
      */

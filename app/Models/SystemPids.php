@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class SystemPids extends Model
 {
-    protected $table = "pytao_system_pids";
+    protected $table = "pytao_system_taobao_pids";
     protected $guarded = ['id'];
     public $timestamps = false;
 

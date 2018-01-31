@@ -711,56 +711,5 @@ class GoodsService
         return $result;
     }
 
-    /**
-     * 查询商品佣金
-     * @param $goodsId
-     */
-    public function commission($goodsId){
-        if($cache = CacheHelper::getCache($goodsId)){
-            return $cache;
-        }
-
-        $user = Auth::guard('api')->user();
-        if($user){
-            $userId = $user->id;
-        }else{
-            //随机获取一个未过期的用户
-            $userId = TaobaoToken::where([
-                ['expires_at', '>', Carbon::now()->addMinute(mt_rand(5, 100))]
-            ])->limit(1)->pluck("user_id")->first();
-        }
-
-        $commission = Goods::where([
-            ['goodsid', '=', $goodsId],
-            ['commission_update_time', '>=', Carbon::now()->subMinute(30)],
-        ])->pluck("commission")->first();
-
-        try{
-            if(!$commission){
-                $data = (new TransferService())->transferLinkByUser($goodsId, $userId);
-                $commission = $data['max_commission_rate'];
-            }
-        }catch (\Exception $e){
-            return false;
-        }
-
-        $realCommission = $commission;
-
-        $detail = (new AlimamaGoodsService())->detail($goodsId);
-        //如果当前佣金等于高佣，则实际佣金为95%
-        if($detail && $detail['eventRate'] == $commission){
-            $realCommission = bcmul($commission, 0.95, 2);
-        }
-
-        $result = [
-            //实际佣金
-            'commission' => $realCommission,
-            //原始佣金
-            'originCommission' => $commission
-        ];
-
-        CacheHelper::setCache($result, 5, $goodsId);
-        return $result;
-    }
 
 }

@@ -164,5 +164,13 @@ class UserController extends Controller
         return $this->ajaxSuccess($url);
     }
 
+    /**
+     * 用户基本信息
+     * @param Request $request
+     */
+    public function simpleUserInfo(Request $request){
+        $data = (new UserService())->simpleUserInfo($request->user()->id);
+        return $this->ajaxSuccess($data);
+    }
 
 }

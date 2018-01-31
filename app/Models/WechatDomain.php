@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class WechatDomain extends Model
 {
-    protected $table = "xmt_wechat_domain";
+    protected $table = "pytao_wechat_domain";
     protected $guarded = ['id'];
     public $timestamps = false;
 }

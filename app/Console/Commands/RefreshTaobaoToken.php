@@ -50,7 +50,7 @@ class RefreshTaobaoToken extends Command
             $where[] = ['expires_at', "<=", Carbon::now()->addMinute(15)];
         }
 
-        $expiredUserIds = TaobaoToken::where($where)->pluck("user_id");
+        $expiredUserIds = TaobaoToken::where($where)->pluck("member_id");
 
         foreach ($expiredUserIds as $userId){
             $ret = (new TaobaoService())->refreshUserToken($userId);

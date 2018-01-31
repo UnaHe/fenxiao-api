@@ -218,4 +218,34 @@ class UserService
         return User::find($code['user_id']);
     }
 
+    /**
+     * 获取用户pid
+     * @param $userId
+     */
+    public function getPidInfo($userId){
+        return SystemPids::where("user_id", $userId)->first();
+    }
+
+    /**
+     * 获取用户基本信息
+     * @param $userId
+     */
+    public function simpleUserInfo($userId){
+        $user = User::query()->from((new User())->getTable()." as user")
+            ->leftJoin((new UserTree())->getTable().' as tree', 'user.id', '=', 'tree.user_id')
+            ->select(["user.id", "user.mobile", "tree.grade"])
+            ->where("user.id", $userId)->first();
+
+        $grade = $user['grade'];
+        $gradeInfo = (new UserGradeService())->getGrade($grade);
+        $data = [
+            'user_id' => $user['id'],
+            'mobile' => $user['mobile'],
+            'grade' => $grade,
+            'grade_str' => $gradeInfo['grade_name'],
+        ];
+
+        return $data;
+    }
+
 }

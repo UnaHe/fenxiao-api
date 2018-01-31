@@ -57,8 +57,22 @@ Route::middleware('auth.api')->namespace('App\Http\Controllers')->group(function
  * 需要登录访问的接口列表
  */
 Route::middleware('auth.api:force')->namespace('App\Http\Controllers')->group(function (){
+    /*
+     * ================
+     * 用户信息
+     * ================
+     */
     //邀请注册信息
     Route::get('/user/inviteInfo', "UserController@inviteInfo");
+    //用户基本信息
+    Route::get('/user/simpleUserInfo', "UserController@simpleUserInfo");
+
+
+    /*
+     * ================
+     * 商品
+     * ================
+     */
     //商品转链
     Route::post('/transferLink', "TransferController@transferLink");
 

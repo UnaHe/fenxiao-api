@@ -25,9 +25,9 @@ class WechatPageService
      * 创建微信单页
      */
     public function createPage($goodsInfo, $userId){
-        $id = Cache::increment('xmt_wechat_page_increase_id');
+        $id = Cache::increment('pytao_wechat_page_increase_id');
         if($id === 1){
-            $id = Cache::increment('xmt_wechat_page_increase_id', WechatPage::max('id') + 1000);
+            $id = Cache::increment('pytao_wechat_page_increase_id', WechatPage::max('id') + 1000);
         }
         $data = [
             'id'    => $id,

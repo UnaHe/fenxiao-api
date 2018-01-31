@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class TaobaoToken extends Model
 {
-    protected $table = "xmt_taobao_token";
+    protected $table = "pytao_system_taobao_token";
     protected $guarded = ['id'];
     public $timestamps = false;
 }
