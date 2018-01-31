@@ -33,10 +33,10 @@ Route::middleware('auth.api')->namespace('App\Http\Controllers')->group(function
     Route::get('/goods', "GoodsController@goodList");
     //栏目商品列表
     Route::get('/columns/{code}/goods', "GoodsController@columnGoods");
-    //商品详情
-    Route::get('/goods/{goodsId}', "GoodsController@detail")->where('goodsId', '[0-9]+');
     //推荐商品列表
     Route::get('/recommendGoods', "GoodsController@recommendGoods");
+    //商品详情
+    Route::get('/goods/{goodsId}', "GoodsController@detail")->where('goodsId', '[0-9]+');
 
     /*
      * ================
@@ -57,12 +57,12 @@ Route::middleware('auth.api')->namespace('App\Http\Controllers')->group(function
  * 需要登录访问的接口列表
  */
 Route::middleware('auth.api:force')->namespace('App\Http\Controllers')->group(function (){
-
     //邀请注册信息
     Route::get('/user/inviteInfo', "UserController@inviteInfo");
-
     //商品转链
     Route::post('/transferLink', "TransferController@transferLink");
+
+
 
 
 

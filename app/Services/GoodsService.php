@@ -9,6 +9,7 @@ namespace App\Services;
 
 use App\Helpers\CacheHelper;
 use App\Helpers\EsHelper;
+use App\Helpers\GoodsHelper;
 use App\Helpers\ProxyClient;
 use App\Helpers\QueryHelper;
 use App\Helpers\UrlHelper;
@@ -72,6 +73,8 @@ class GoodsService
      * @return array
      */
     public function goodList($queryParams, $sort, $page, $limit, $scrollId, $userId){
+        $results = [];
+
         $sortVal = $this->sort($sort);
 
         if($page == 1){
@@ -178,6 +181,7 @@ class GoodsService
                     'query' =>[
                         'bool' => [
                             'filter'=>$filters,
+                            'must' => [],
                         ],
                     ]
                 ]
@@ -185,10 +189,22 @@ class GoodsService
 
             //搜索关键词
             if($keyword = UtilsHelper::arrayValue($queryParams, 'keyword')){
-                $esParams['body']['query']['bool']['must'] = [
+                $esParams['body']['query']['bool']['must'][] = [
                     'match' => [
                         'title' => [
                             'query' => $keyword,
+                            'operator' => 'and'
+                        ]
+                    ],
+                ];
+            }
+
+            //视频商品
+            if($isVideo = UtilsHelper::arrayValue($queryParams, 'isVideo')){
+                $esParams['body']['query']['bool']['must'][] = [
+                    'match' => [
+                        'video_info' => [
+                            'query' => "src",
                             'operator' => 'and'
                         ]
                     ],
@@ -201,12 +217,9 @@ class GoodsService
             }
 
             $esHelper = new EsHelper();
-            return [
-                'data' => $esHelper->search($esParams),
-                'scroll_id' => $esHelper->getScrollId()
-            ];
+            $results =  $esHelper->search($esParams);
+            $scrollId = $esHelper->getScrollId();
         }else{
-            $results = [];
             try{
                 if($scrollId){
                     $results = (new EsHelper())->scroll([
@@ -214,24 +227,42 @@ class GoodsService
                         'scroll' => "15m"
                     ]);
                 }
-                return [
-                    'data' => $results,
-                    'scroll_id' => $scrollId
-                ];
             }catch (\Exception $e){
             }
-
-            return $results;
         }
+
+        if($results){
+            $commissionService = new CommissionService($userId);
+            foreach ($results as &$item){
+                $keys = ['is_jpseller', 'is_qjd', 'is_haitao', 'is_tmallgj', 'is_jyjseller', 'is_freight_insurance'];
+                foreach ($keys as $key){
+                    $value = $item[$key];
+                    if($value == 1){
+                        $item[$key] = 0;
+                    }else if($value == 2){
+                        $item[$key] = 1;
+                    }
+                }
+                $item['pic'] = (new GoodsHelper())->resizePic($item['pic'], '240x240');
+                //用户返利金额
+                $item['commission_amount'] = $commissionService->goodsCommisstion($item);
+            }
+        }
+
+        return [
+            'data' => $results,
+            'scroll_id' => $scrollId
+        ];
     }
 
     /**
      * 商品推荐列表
-     * @param $keyword 搜索关键词
-     * @param null $excludeTaobaoId 排除的淘宝商品id
+     * @param string $keyword 搜索关键词
+     * @param int $isVideo 是否推荐视频商品
+     * @param int|null $excludeTaobaoId 排除的淘宝商品id
      * @return array
      */
-    public function recommendGoods($keyword, $excludeTaobaoId=null){
+    public function recommendGoods($keyword, $isVideo, $excludeTaobaoId=null, $userId){
         if($cache = CacheHelper::getCache()){
             return $cache;
         }
@@ -249,17 +280,31 @@ class GoodsService
                     'bool' => [
                         'filter'=>$filters,
                         'must' => [
-                            'match' => [
-                                'title' => [
-                                    'query' => $keyword,
-                                    'operator' => 'or'
+                            [
+                                'match' => [
+                                    'title' => [
+                                        'query' => $keyword,
+                                        'operator' => 'or'
+                                    ]
                                 ]
-                            ],
+                            ]
                         ],
                     ],
                 ]
             ]
         ];
+
+        //视频商品
+        if($isVideo){
+            $esParams['body']['query']['bool']['must'][] = [
+                'match' => [
+                    'video_info' => [
+                        'query' => "src",
+                        'operator' => 'and'
+                    ]
+                ],
+            ];
+        }
 
         $esHelper = new EsHelper();
         $results = $esHelper->search($esParams);
@@ -276,14 +321,28 @@ class GoodsService
         }
         $results = UtilsHelper::arraySort($results, 'commission', SORT_DESC);
 
+        if($results){
+            $commissionService = new CommissionService($userId);
+            foreach ($results as &$item){
+                $item['pic'] = (new GoodsHelper())->resizePic($item['pic'], '240x240');
+                //用户返利金额
+                $item['commission_amount'] = $commissionService->goodsCommisstion($item);
+            }
+        }
+
         CacheHelper::setCache($results, 5);
         return $results;
     }
 
     /**
      * 获取栏目商品列表
+     * @param string $columnCode 栏目代码
+     * @param array $queryParams 查询参数
+     * @param int $sort 排序
+     * @param int $userId 用户id
+     * @return \Illuminate\Database\Eloquent\Collection|static[]
      */
-    public function columnGoodList($columnCode, $category, $sort, $isTaoqianggou, $isJuhuashuan, $minPrice, $maxPrice, $isTmall, $minCommission, $minSellNum, $minCouponPrice, $maxCouponPrice){
+    public function columnGoodList($columnCode, $queryParams, $sort, $userId){
         $query = Goods::query()->from((new Goods())->getTable().' as goods');
         $query->leftJoin((new ColumnGoodsRel())->getTable().' as ref', 'goods.id', '=', 'ref.goods_id');
         $query->where('ref.column_code', $columnCode);
@@ -296,36 +355,36 @@ class GoodsService
             $query->orWhere("goods.starttime", null);
         });
 
-        if($category){
+        if($category = UtilsHelper::arrayValue($queryParams, 'category')){
             $query->where("goods.catagory_id", $category);
         }
-        if($isTaoqianggou){
+        if($isTaoqianggou = UtilsHelper::arrayValue($queryParams, 'isTaoqianggou')){
             $query->where("goods.is_taoqianggou", 1);
         }
-        if($isJuhuashuan){
+        if($isJuhuashuan = UtilsHelper::arrayValue($queryParams, 'isJuhuashuan')){
             $query->where("goods.is_juhuashuan", 1);
         }
-        if($minPrice){
+        if($minPrice = UtilsHelper::arrayValue($queryParams, 'minPrice')){
             $query->where("goods.price", '>=', $minPrice);
         }
-        if($maxPrice){
+        if($maxPrice = UtilsHelper::arrayValue($queryParams, 'maxPrice')){
             $query->where("goods.price", '<=', $maxPrice);
         }
-        if($isTmall){
+        if($isTmall = UtilsHelper::arrayValue($queryParams, 'isTmall')){
             $query->where("goods.is_tmall", 1);
         }
-        if($minCommission){
+        if($minCommission = UtilsHelper::arrayValue($queryParams, 'minCommission')){
             $query->where("goods.commission", '>=', $minCommission);
         }else{
             $query->where("goods.commission", '>', 0);
         }
-        if($minSellNum){
+        if($minSellNum = UtilsHelper::arrayValue($queryParams, 'minSellNum')){
             $query->where("goods.sell_num", '>=', $minSellNum);
         }
-        if($minCouponPrice){
+        if($minCouponPrice = UtilsHelper::arrayValue($queryParams, 'minCouponPrice')){
             $query->where("goods.coupon_price", '>=', $minCouponPrice);
         }
-        if($maxCouponPrice){
+        if($maxCouponPrice = UtilsHelper::arrayValue($queryParams, 'maxCouponPrice')){
             $query->where("goods.coupon_price", '<=', $maxCouponPrice);
         }
 
@@ -338,16 +397,27 @@ class GoodsService
         }
 
         $list = (new QueryHelper())->pagination($query)->get();
+
+        if($list){
+            $commissionService = new CommissionService($userId);
+            foreach ($list as &$item){
+                $item['pic'] = (new GoodsHelper())->resizePic($item['pic'], '240x240');
+                //用户返利金额
+                $item['commission_amount'] = $commissionService->goodsCommisstion($item);
+            }
+        }
+
         return $list;
     }
 
 
     /**
      * 商品详情
-     * @param $goodId
-     * @return mixed
+     * @param int $goodId 商品id
+     * @param int $userId 用户id
+     * @return \Illuminate\Cache\CacheManager|mixed|null
      */
-    public function detail($goodId){
+    public function detail($goodId, $userId){
         if($cache = CacheHelper::getCache()){
             return $cache;
         }
@@ -392,6 +462,11 @@ class GoodsService
             $data['active_time'] = $miaoshaTime;
             $data['is_miaosha'] = 1;
         }
+
+        $commissionService = new CommissionService($userId);
+        $data['pic'] = (new GoodsHelper())->resizePic($data['pic'], '240x240');
+        //用户返利金额
+        $data['commission_amount'] = $commissionService->goodsCommisstion($data);
 
         CacheHelper::setCache($data, 2);
         return $data;

@@ -194,38 +194,6 @@ class TransferService
         return $data;
     }
 
-    /**
-     * 非淘客链接转淘口令
-     * @param $title
-     * @param $url
-     * @param string $pic
-     * @return \Illuminate\Cache\CacheManager|mixed
-     * @throws \Exception
-     */
-    public function transferCommonTaoCode($title, $url, $pic=""){
-        if($cache = CacheHelper::getCache()){
-            return $cache;
-        }
-
-        try{
-            $req = new \WirelessShareTpwdCreateRequest;
-            $tpwd_param = new \GenPwdIsvParamDto;
-            $tpwd_param->ext="{}";
-            $tpwd_param->logo=$pic;
-            $tpwd_param->url=$url;
-            $tpwd_param->text=trim($title, " \t\n\r\0\x0B@");
-            $tpwd_param->user_id="1";
-            $req->setTpwdParam(json_encode($tpwd_param));
-            $resp = $this->topClient->execute($req);
-            $result = (array)$resp;
-            $data = $result['model'];
-        }catch (\Exception $e){
-            throw new \Exception('淘口令转换失败');
-        }
-
-        CacheHelper::setCache($data);
-        return $data;
-    }
 
     /**
      * 商品转链
