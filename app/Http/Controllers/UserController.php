@@ -173,4 +173,15 @@ class UserController extends Controller
         return $this->ajaxSuccess($data);
     }
 
+    /**
+     * 用户余额
+     * @param Request $request
+     */
+    public function balance(Request $request){
+        $data = (new UserService())->balance($request->user()->id);
+        return $this->ajaxSuccess([
+            'balance' => $data
+        ]);
+    }
+    
 }

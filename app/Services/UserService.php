@@ -248,4 +248,14 @@ class UserService
         return $data;
     }
 
+    /**
+     * 用户余额查询
+     * @param $userId
+     * @return array
+     */
+    public function balance($userId){
+        $user = User::find($userId);
+        return $user['balance'];
+    }
+
 }
