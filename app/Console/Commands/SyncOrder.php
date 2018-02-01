@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\AlimamaOrder;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 
 class SyncOrder extends Command
@@ -79,9 +80,12 @@ class SyncOrder extends Command
 
         $content = Excel::load($file)->get()->toArray();
 
+        $orderNos = [];
+        $orders = [];
         foreach ($content as $item){
             $orderNo = $item['订单编号'];
-            $data = [
+            $orderNos[] = $orderNo;
+            $orders[] = [
                 'order_no' => $orderNo,
                 'order_state' => $this->getOrderState($item['订单状态']),
                 'goods_id' => $item['商品id'],
@@ -110,18 +114,29 @@ class SyncOrder extends Command
                 'click_time' => $item['点击时间'],
                 'sync_time' => Carbon::now(),
             ];
+        }
 
+
+        /*
+         * 分批次删除数据
+         */
+        $pageLimit = 100;
+        $pageOffset = 0;
+        do{
+            $orderNoSlice = array_slice($orderNos, $pageOffset, $pageLimit);
+            if(!count($orderNoSlice)){
+                break;
+            }
+            $pageOffset += $pageLimit;
+            AlimamaOrder::whereIn("order_no", $orderNoSlice)->delete();
+        }while(true);
+
+
+        foreach ($orders as $order){
             try{
-                $order = AlimamaOrder::where(['order_no' => $orderNo])->first();
-                if($order){
-                    if(!AlimamaOrder::where(['order_no' => $orderNo])->update($data)){
-                        throw new \Exception("更新失败");
-                    }
-                }else{
-                    if(!AlimamaOrder::create($data)){
-                        throw new \Exception("添加失败");
-                    };
-                }
+                if(!AlimamaOrder::create($order)){
+                    throw new \Exception("添加失败");
+                };
                 $this->info($orderNo." 同步成功");
             }catch (\Exception $e){
                 $this->error($orderNo." 同步失败");
