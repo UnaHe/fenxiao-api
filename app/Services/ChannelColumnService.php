@@ -7,6 +7,7 @@
  */
 namespace App\Services;
 
+use App\Helpers\GoodsHelper;
 use App\Helpers\QueryHelper;
 use App\Models\ChannelColumn;
 use App\Models\ColumnGoodsRel;
@@ -53,7 +54,7 @@ class ChannelColumnService
      * @param $endTime
      * @return mixed
      */
-    public function miaoshaGoods($activeTime){
+    public function miaoshaGoods($activeTime, $userId){
         $query = Goods::query()->from((new Goods())->getTable().' as goods');
         $query->leftJoin((new ColumnGoodsRel())->getTable().' as ref', 'goods.id', '=', 'ref.goods_id');
         $query->where('ref.column_code', 'zhengdianmiaosha');
@@ -70,10 +71,15 @@ class ChannelColumnService
 
         $list = (new QueryHelper())->pagination($query)->get();
         if($list){
+            $commissionService = new CommissionService($userId);
             foreach ($list as &$item){
                 $item['is_miaosha'] = 1;
+                $item['pic'] = (new GoodsHelper())->resizePic($item['pic'], '240x240');
+                //用户返利金额
+                $item['commission_amount'] = $commissionService->goodsCommisstion($item);
             }
         }
+
         return $list;
     }
 

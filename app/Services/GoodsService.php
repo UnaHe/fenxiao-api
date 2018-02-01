@@ -584,8 +584,8 @@ class GoodsService
      * 全网搜索
      * @param $keyword
      */
-    public function queryAllGoods($keyword, $hasShopCoupon, $isHighPayRate, $isTmall, $minSellNum, $minCommission, $maxCommission, $minPrice, $maxPrice, $page, $limit, $sort){
-        $keyword = urlencode($keyword);
+    public function queryAllGoods($queryParams, $page, $limit, $sort, $userId){
+        $keyword = urlencode(UtilsHelper::arrayValue($queryParams, 'keyword'));
         $url = "http://pub.alimama.com/items/search.json?q={$keyword}&toPage={$page}&perPageSize={$limit}&auctionTag=&t=".time();
         switch ($sort){
             case self::SORT_RENQI:{
@@ -607,37 +607,37 @@ class GoodsService
         }
         $shopTag = [];
         //店铺优惠券筛选
-        if($hasShopCoupon){
+        if($hasShopCoupon = UtilsHelper::arrayValue($queryParams, 'hasShopCoupon')){
             $shopTag[] = 'dpyhq';
             $url .= "&dpyhq=1";
         }
         //月成交转化率高于行业均值
-        if($isHighPayRate){
+        if($isHighPayRate = UtilsHelper::arrayValue($queryParams, 'isHighPayRate')){
             $url .= "&hPayRate30=1";
         }
         //天猫
-        if($isTmall){
+        if($isTmall = UtilsHelper::arrayValue($queryParams, 'isTmall')){
             $shopTag[] = 'b2c';
             $url .= "&b2c=1";
         }
         //最低销量筛选
-        if($minSellNum){
+        if($minSellNum = UtilsHelper::arrayValue($queryParams, 'minSellNum')){
             $url .= "&startBiz30day=".$minSellNum;
         }
         //最低佣金筛选
-        if($minCommission){
+        if($minCommission = UtilsHelper::arrayValue($queryParams, 'minCommission')){
             $url .= "&startTkRate=".$minCommission;
         }
         //最高佣金筛选
-        if($maxCommission){
+        if($maxCommission = UtilsHelper::arrayValue($queryParams, 'maxCommission')){
             $url .= "&endTkRate=".$maxCommission;
         }
         //最低价格筛选
-        if($minPrice){
+        if($minPrice = UtilsHelper::arrayValue($queryParams, 'minPrice')){
             $url .= "&startPrice=".$minPrice;
         }
         //最高价格筛选
-        if($maxPrice){
+        if($maxPrice = UtilsHelper::arrayValue($queryParams, 'maxPrice')){
             $url .= "&endPrice=".$maxPrice;
         }
 
@@ -649,6 +649,7 @@ class GoodsService
             return null;
         }
 
+        $commissionService = new CommissionService($userId);
         $allGoods = $response['data']['pageList'];
         $result = [];
         foreach ($allGoods as $goods){
@@ -704,6 +705,10 @@ class GoodsService
             ];
             //分享描述
             $data['share_desc'] = (new GoodsService())->getShareDesc($shareData);
+
+            $data['pic'] = (new GoodsHelper())->resizePic($data['pic'], '240x240');
+            //用户返利金额
+            $data['commission_amount'] = $commissionService->goodsCommisstion($data);
 
             $result[] = $data;
         }

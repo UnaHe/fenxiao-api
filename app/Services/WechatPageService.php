@@ -57,7 +57,7 @@ class WechatPageService
      * @return mixed
      */
     public function getPageUrl($id){
-        return "http://".config('domains.redirect_domain').URL::action('WechatPageController@page', ['id'=>$id], false);
+        return "http://".config('domains.redirect_domain').URL::action('WechatPageController@redirect', ['id'=>$id], false);
     }
 
     /**

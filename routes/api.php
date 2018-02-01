@@ -26,7 +26,6 @@ Route::middleware('auth.api')->namespace('App\Http\Controllers')->group(function
      * 商品信息接口
      * ================
      */
-
     //商品分类
     Route::get('/categorys', "CategoryController@getAllCategory");
     //商品列表
@@ -37,13 +36,21 @@ Route::middleware('auth.api')->namespace('App\Http\Controllers')->group(function
     Route::get('/recommendGoods', "GoodsController@recommendGoods");
     //商品详情
     Route::get('/goods/{goodsId}', "GoodsController@detail")->where('goodsId', '[0-9]+');
+    //秒杀时间点
+    Route::get('/miaosha/times', "MiaoshaController@getTimes");
+    //秒杀商品列表
+    Route::get('/miaosha/goods', "MiaoshaController@getGoods");
+    //全网搜索
+    Route::get('/queryAllGoods', "GoodsController@queryAllGoods");
+
 
     /*
      * ================
      * 其他
      * ================
      */
-
+    //服务器时间
+    Route::get('/serverTime', "CommonController@getServerTime");
     //指定位置广告banner列表
     Route::get('/banners/{position}', "BannerController@getBanner");
     //热搜词
@@ -84,29 +91,15 @@ Route::middleware('auth.api:force')->namespace('App\Http\Controllers')->group(fu
 
 
 
-    //佣金查询
-    Route::get('/commission', "GoodsController@commission");
+//    //获取消息列表
+//    Route::get('/messages', "MessageController@getMessageList");
+//    //获取消息详情
+//    Route::get('/messages/{messageId}', "MessageController@getMessage")->where('messageId', '[0-9]+');
+//    //删除消息
+//    Route::delete('/messages/{messageId}', "MessageController@deleteMessage")->where('messageId', '[0-9]+');
+//    //获取未读消息数量
+//    Route::get('/messages/unReadNum', "MessageController@unReadNum");
 
-    //获取消息列表
-    Route::get('/messages', "MessageController@getMessageList");
-    //获取消息详情
-    Route::get('/messages/{messageId}', "MessageController@getMessage")->where('messageId', '[0-9]+');
-    //删除消息
-    Route::delete('/messages/{messageId}', "MessageController@deleteMessage")->where('messageId', '[0-9]+');
-    //获取未读消息数量
-    Route::get('/messages/unReadNum', "MessageController@unReadNum");
-
-
-
-    //全网搜索
-    Route::get('/queryAllGoods', "GoodsController@queryAllGoods");
-
-    //秒杀时间点
-    Route::get('/miaosha/times', "MiaoshaController@getTimes");
-    //服务器时间
-    Route::get('/miaosha/servertime', "MiaoshaController@getServerTime");
-    //秒杀商品列表
-    Route::get('/miaosha/goods', "MiaoshaController@getGoods");
 
 
 });
