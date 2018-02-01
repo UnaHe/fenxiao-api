@@ -14,7 +14,7 @@ class SyncOrder extends Command
      *
      * @var string
      */
-    protected $signature = 'sync_order {--from_time=} {--to_time=}';
+    protected $signature = 'sync_order {--from_time=} {--to_time=} {--file=}';
 
     /**
      * The console command description.
@@ -45,28 +45,34 @@ class SyncOrder extends Command
         $fromTime = $this->option('from_time') ?: $nowDate;
         //同步结束日期
         $toTime = $this->option('to_time') ?: $nowDate;
+        //指定文件
+        $excelFile = $this->option('file');
 
-        $downloadUrl = "http://pub.alimama.com/report/getTbkPaymentDetails.json?queryType=1&payStatus=&DownloadID=DOWNLOAD_REPORT_INCOME_NEW&startTime={$fromTime}&endTime={$toTime}";
+        if(!$excelFile){
+            $downloadUrl = "http://pub.alimama.com/report/getTbkPaymentDetails.json?queryType=1&payStatus=&DownloadID=DOWNLOAD_REPORT_INCOME_NEW&startTime={$fromTime}&endTime={$toTime}";
 
-        $cookie = $this->getCookie();
-        if(!$cookie){
-            throw new \Exception("获取cookie失败");
+            $cookie = $this->getCookie();
+            if(!$cookie){
+                throw new \Exception("获取cookie失败");
+            }
+
+            $client = (new \GuzzleHttp\Client([
+                'headers' => [
+                    'cookie' => $cookie,
+                ]
+            ]));
+
+            $dir = storage_path("download");
+            if(!is_dir($dir)){
+                @mkdir($dir);
+            }
+            $file = $dir."/order_".time().mt_rand(1000, 9999).".xls";
+            $client->get($downloadUrl, ['save_to' => $file]);
+        }else{
+            $file = storage_path("download/".$excelFile);
         }
 
-        $client = (new \GuzzleHttp\Client([
-            'headers' => [
-                'cookie' => $cookie,
-            ]
-        ]));
 
-        $dir = storage_path("download");
-        if(!is_dir($dir)){
-            @mkdir($dir);
-        }
-        $file = $dir."/order_".time().mt_rand(1000, 9999).".xls";
-        $client->get($downloadUrl, ['save_to' => $file]);
-
-//        $file = storage_path("download/1.xls");
         if(!is_file($file)){
             throw new \Exception("文件下载失败");
         }
