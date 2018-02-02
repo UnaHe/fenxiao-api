@@ -80,64 +80,103 @@ class SyncOrder extends Command
 
         $content = Excel::load($file)->get()->toArray();
 
-        $orderNos = [];
         $orders = [];
         foreach ($content as $item){
             $orderNo = $item['订单编号'];
-            $orderNos[] = $orderNo;
-            $orders[] = [
+            $orderState = $this->getOrderState($item['订单状态']);
+            $goodsId = $item['商品id'];
+            $goodsTitle = $item['商品信息'];
+            $goodsNum = $item['商品数'];
+            $goodsPrice = $item['商品单价'];
+            $sellerName = $item['掌柜旺旺'];
+            $shopName = $item['所属店铺'];
+            $incomeRate = floatval($item['收入比率']);
+            $shareRate = floatval($item['分成比率']);
+            $payMoney = $item['付款金额'];
+            $settleMoney = $item['结算金额'];
+            $settleTime = $item['结算时间'];
+            $predictMoney = $item['效果预估'];
+            $predictIncome = $item['预估收入'];
+            $commissionRate = floatval($item['佣金比率']);
+            $commissionMoney = $item['佣金金额'];
+            $subsidyRate = floatval($item['补贴比率']);
+            $subsidyMoney = $item['补贴金额'];
+            $subsidyType = $item['补贴类型'];
+            $siteId = $item['来源媒体id'];
+            $adzoneId = $item['广告位id'];
+            $payPlatform = $item['订单类型'];
+            $platform = $item['成交平台'];
+            $createTime = $item['创建时间'];
+            $clickTime = $item['点击时间'];
+
+            $arrayKey = $orderNo."_".$goodsId;
+            if(isset($orders[$arrayKey])){
+                $order = $orders[$arrayKey];
+                $goodsNum += $order['goods_num'];
+                $payMoney += $order['pay_money'];
+                $settleMoney += $order['settle_money'];
+                $predictMoney += $order['predict_money'];
+                $predictIncome += $order['predict_income'];
+                $commissionMoney += $order['commission_money'];
+                $subsidyMoney += $order['subsidy_money'];
+            }
+
+            $orders[$arrayKey] = [
                 'order_no' => $orderNo,
-                'order_state' => $this->getOrderState($item['订单状态']),
-                'goods_id' => $item['商品id'],
-                'goods_title' => $item['商品信息'],
-                'goods_num' => $item['商品数'],
-                'goods_price' => $item['商品单价'],
-                'seller_name' => $item['掌柜旺旺'],
-                'shop_name' => $item['所属店铺'],
-                'income_rate' => floatval($item['收入比率']),
-                'share_rate' => floatval($item['分成比率']),
-                'pay_money' => $item['付款金额'],
-                'settle_money' => $item['结算金额'],
-                'settle_time' => $item['结算时间'],
-                'predict_money' => $item['效果预估'],
-                'predict_income' => $item['预估收入'],
-                'commission_rate' => floatval($item['佣金比率']),
-                'commission_money' => $item['佣金金额'],
-                'subsidy_rate' => floatval($item['补贴比率']),
-                'subsidy_money' => $item['补贴金额'],
-                'subsidy_type' => $item['补贴类型'],
-                'site_id' => $item['来源媒体id'],
-                'adzone_id' => $item['广告位id'],
-                'pay_platform' => $item['订单类型'],
-                'platform' => $item['成交平台'],
-                'create_time' => $item['创建时间'],
-                'click_time' => $item['点击时间'],
+                'order_state' => $orderState,
+                'goods_id' => $goodsId,
+                'goods_title' => $goodsTitle,
+                'goods_num' => $goodsNum,
+                'goods_price' => $goodsPrice,
+                'seller_name' => $sellerName,
+                'shop_name' => $shopName,
+                'income_rate' => $incomeRate,
+                'share_rate' => $shareRate,
+                'pay_money' => $payMoney,
+                'settle_money' => $settleMoney,
+                'settle_time' => $settleTime,
+                'predict_money' => $predictMoney,
+                'predict_income' => $predictIncome,
+                'commission_rate' => $commissionRate,
+                'commission_money' => $commissionMoney,
+                'subsidy_rate' => $subsidyRate,
+                'subsidy_money' => $subsidyMoney,
+                'subsidy_type' => $subsidyType,
+                'site_id' => $siteId,
+                'adzone_id' => $adzoneId,
+                'pay_platform' => $payPlatform,
+                'platform' => $platform,
+                'create_time' => $createTime,
+                'click_time' => $clickTime,
                 'sync_time' => Carbon::now(),
             ];
+
         }
 
-
-        /*
-         * 分批次删除数据
-         */
-        $pageLimit = 100;
-        $pageOffset = 0;
-        do{
-            $orderNoSlice = array_slice($orderNos, $pageOffset, $pageLimit);
-            if(!count($orderNoSlice)){
-                break;
-            }
-            $pageOffset += $pageLimit;
-            AlimamaOrder::whereIn("order_no", $orderNoSlice)->delete();
-        }while(true);
-
-
         foreach ($orders as $order){
+            $orderNo = $order['order_no'];
+            $where = [
+                'order_no' => $orderNo,
+                'goods_id' => $order['goods_id']
+            ];
+
             try{
-                if(!AlimamaOrder::create($order)){
-                    throw new \Exception("添加失败");
-                };
-                $this->info($orderNo." 同步成功");
+                $orderModel = AlimamaOrder::where($where)->first();
+                if($orderModel){
+                    if($orderModel['order_state'] != $order['order_state']){
+                        if(!AlimamaOrder::where($where)->update($order)){
+                            throw new \Exception("更新失败");
+                        }
+                        $this->info($orderNo." 同步成功");
+                    }else{
+                        $this->info($orderNo." 状态未更新");
+                    }
+                }else{
+                    if(!AlimamaOrder::create($order)){
+                        throw new \Exception("添加失败");
+                    };
+                    $this->info($orderNo." 同步成功");
+                }
             }catch (\Exception $e){
                 $this->error($orderNo." 同步失败");
             }
