@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Events\CalculateOrderEvent;
 use App\Models\AlimamaOrder;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -162,6 +163,7 @@ class SyncOrder extends Command
 
             try{
                 $orderModel = AlimamaOrder::where($where)->first();
+
                 if($orderModel){
                     if($orderModel['order_state'] != $order['order_state']){
                         if(!AlimamaOrder::where($where)->update($order)){
@@ -172,9 +174,10 @@ class SyncOrder extends Command
                         $this->info($orderNo." 状态未更新");
                     }
                 }else{
-                    if(!AlimamaOrder::create($order)){
+                    if(!$orderModel = AlimamaOrder::create($order)){
                         throw new \Exception("添加失败");
-                    };
+                    }
+                    event(new CalculateOrderEvent($orderModel));
                     $this->info($orderNo." 同步成功");
                 }
             }catch (\Exception $e){

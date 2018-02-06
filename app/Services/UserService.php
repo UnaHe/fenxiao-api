@@ -43,11 +43,13 @@ class UserService
             }
         }
 
-        $rightValue = UserTree::where("user_id", $parentUserId)->pluck("right_val")->first();
-        if(!$rightValue){
+        $parentUser = UserTree::where("user_id", $parentUserId)->first();
+        if(!$parentUser){
             Log::error("pytao_user_tree 无user_id=0的初始化数据");
             throw new \Exception("系统错误");
         }
+
+        $rightValue = $parentUser['right_val'];
 
         DB::beginTransaction();
         try{
@@ -76,6 +78,7 @@ class UserService
                 'parent_id' => $parentUserId,
                 'left_val' => $rightValue,
                 'right_val' => $rightValue+1,
+                'level' => $parentUser['level'] + 1,
             ])){
                 Log::error("pytao_user_tree 插入节点失败");
                 throw new \Exception("系统错误");

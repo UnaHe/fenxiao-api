@@ -16,8 +16,11 @@ class EventServiceProvider extends ServiceProvider
         'App\Events\RegisterUserEvent' => [
             'App\Listeners\UserUpgradeListener',
         ],
+        'App\Events\CalculateOrderEvent' => [
+            'App\Listeners\CalculateOrderListener',
+        ],
     ];
-
+    
     /**
      * Register any events for your application.
      *
