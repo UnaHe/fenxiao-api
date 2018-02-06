@@ -32,4 +32,16 @@ class StatisticsController extends Controller
 
         return $this->ajaxSuccess($data);
     }
+
+    /**
+     * 查询月收益数据
+     * @param Request $request
+     * @return static
+     */
+    public function month(Request $request){
+        $userId = $request->user()->id;
+        $data = (new StatisticsService())->month($userId);
+
+        return $this->ajaxSuccess($data);
+    }
 }
