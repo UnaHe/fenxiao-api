@@ -42,6 +42,6 @@ class CacheHelper
      */
     public static function getCacheKey($caller, $cacheKeyArgs){
         $callerArgs = $cacheKeyArgs ?: $caller['args'];
-        return $caller['class']."::".$caller['function'].":".md5(json_encode($callerArgs));
+        return config('app.name').":".$caller['class']."::".$caller['function'].":".md5(json_encode($callerArgs));
     }
 }
