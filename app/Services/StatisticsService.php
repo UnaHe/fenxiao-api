@@ -114,6 +114,37 @@ class StatisticsService
     }
 
     /**
+     * 查询用户团队奖励收入（团队提成）
+     * @param int $userId 用户id
+     * @return array
+     */
+    public function userTeamIncome($userId){
+        $userId = 1243;
+        $startMonth = Carbon::now()->startOfMonth()->startOfDay()->toDateTimeString();
+        $endMonth = Carbon::now()->endOfMonth()->endOfDay()->toDateTimeString();
+
+        $user = UserTree::where("user_id", $userId)->first();
+
+        //所有团队成员id
+        $teamUserIds = UserTree::where([
+            ['left_val', ">", $user['left_val']],
+            ['right_val', "<", $user['right_val']],
+        ])->pluck("user_id")->toArray();
+
+        //当月结算
+        $curMonthPredict = $this->predict($startMonth, $endMonth, $teamUserIds, $userId, 0, 1);
+
+        $data = [
+            'settle' => [
+                'cur_month' => $curMonthPredict,
+            ],
+        ];
+
+        return $data;
+    }
+
+
+    /**
      * 预估数据
      * @param string $startTime 开始时间
      * @param string $endTime 结束时间

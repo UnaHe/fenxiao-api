@@ -97,7 +97,8 @@ Route::middleware('auth.api:force')->namespace('App\Http\Controllers')->group(fu
     Route::get('/statistics/month', "StatisticsController@month");
     //查询团队月收益数据
     Route::get('/statistics/team/month', "StatisticsController@teamMonth");
-
+    //查询用户团队奖励收入（团队提成）
+    Route::get('/statistics/team/user_team_income', "StatisticsController@userTeamIncome");
 
 
 //    //获取消息列表

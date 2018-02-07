@@ -56,4 +56,16 @@ class StatisticsController extends Controller
 
         return $this->ajaxSuccess($data);
     }
+
+    /**
+     * 查询用户团队奖励收入（团队提成）
+     * @param Request $request
+     * @return static
+     */
+    public function userTeamIncome(Request $request){
+        $userId = $request->user()->id;
+        $data = (new StatisticsService())->userTeamIncome($userId);
+
+        return $this->ajaxSuccess($data);
+    }
 }
