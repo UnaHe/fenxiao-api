@@ -55,6 +55,8 @@ Route::middleware('auth.api')->namespace('App\Http\Controllers')->group(function
     Route::get('/banners/{position}', "BannerController@getBanner");
     //热搜词
     Route::get('/hotKeyword', "GoodsController@hotKeyWord");
+    //提交意见反馈
+    Route::post('/feedback', "FeedbackController@feedback");
 
 });
 
