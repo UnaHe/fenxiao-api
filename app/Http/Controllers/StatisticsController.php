@@ -44,4 +44,16 @@ class StatisticsController extends Controller
 
         return $this->ajaxSuccess($data);
     }
+
+    /**
+     * 查询团队月收益数据
+     * @param Request $request
+     * @return static
+     */
+    public function teamMonth(Request $request){
+        $userId = $request->user()->id;
+        $data = (new StatisticsService())->teamMonth($userId);
+
+        return $this->ajaxSuccess($data);
+    }
 }

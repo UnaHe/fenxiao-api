@@ -10,6 +10,7 @@ namespace App\Services;
 use App\Helpers\UtilsHelper;
 use App\Models\AlimamaOrder;
 use App\Models\UserOrderIncome;
+use App\Models\UserTree;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -26,7 +27,7 @@ class StatisticsService
      * @param int $userId 用户id
      */
     public function day($day, $userId){
-        $data = $this->predict($day->startOfDay()->toDateTimeString(), $day->endOfDay()->toDateTimeString(), $userId);
+        $data = $this->predict($day->startOfDay()->toDateTimeString(), $day->endOfDay()->toDateTimeString(), $userId, $userId, 1);
         $data['day'] = $day->toDateString();
 
         return $data;
@@ -44,15 +45,59 @@ class StatisticsService
         $endOfLastMonth = Carbon::now()->subMonth(1)->endOfMonth()->endOfDay()->toDateTimeString();
 
         //当月预估
-        $curMonthPredict = $this->predict($startMonth, $endMonth, $userId);
+        $curMonthPredict = $this->predict($startMonth, $endMonth, $userId, $userId, 1);
         //上月预估
-        $lastMonthPredict = $this->predict($startOfLastMonth, $endOfLastMonth, $userId);
+        $lastMonthPredict = $this->predict($startOfLastMonth, $endOfLastMonth, $userId, $userId, 1);
 
         //当月结算
-        $curMonthSettle = $this->predict($startMonth, $endMonth, $userId, 1);
+        $curMonthSettle = $this->predict($startMonth, $endMonth, $userId, $userId, 1, 1);
         //上月结算
-        $lastMonthSettle = $this->predict($startOfLastMonth, $endOfLastMonth, $userId, 1);
+        $lastMonthSettle = $this->predict($startOfLastMonth, $endOfLastMonth, $userId, $userId, 1, 1);
 
+
+        $data = [
+            'predict' => [
+                'cur_month' => $curMonthPredict,
+                'last_month' => $lastMonthPredict
+            ],
+            'settle' => [
+                'cur_month' => $curMonthSettle,
+                'last_month' => $lastMonthSettle
+            ]
+        ];
+
+        return $data;
+    }
+
+    /**
+     * 查询团队月收益数据
+     * @param int $userId 用户id
+     * @return array
+     */
+    public function teamMonth($userId){
+        $startMonth = Carbon::now()->startOfMonth()->startOfDay()->toDateTimeString();
+        $endMonth = Carbon::now()->endOfMonth()->endOfDay()->toDateTimeString();
+        $startOfLastMonth = Carbon::now()->subMonth(1)->startOfMonth()->startOfDay()->toDateTimeString();
+        $endOfLastMonth = Carbon::now()->subMonth(1)->endOfMonth()->endOfDay()->toDateTimeString();
+
+        $user = UserTree::where("user_id", $userId)->first();
+
+        //下两层团队成员id
+        $teamUserIds = UserTree::where([
+            ['left_val', ">", $user['left_val']],
+            ['right_val', "<", $user['right_val']],
+            ['level', "<=", $user['level']+2],
+        ])->pluck("user_id")->toArray();
+
+        //当月预估
+        $curMonthPredict = $this->predict($startMonth, $endMonth, $teamUserIds, null, 1);
+        //上月预估
+        $lastMonthPredict = $this->predict($startOfLastMonth, $endOfLastMonth, $teamUserIds, null, 1);
+
+        //当月结算
+        $curMonthSettle = $this->predict($startMonth, $endMonth, $teamUserIds, null, 1,1);
+        //上月结算
+        $lastMonthSettle = $this->predict($startOfLastMonth, $endOfLastMonth, $teamUserIds, null, 1,1);
 
         $data = [
             'predict' => [
@@ -72,15 +117,29 @@ class StatisticsService
      * 预估数据
      * @param string $startTime 开始时间
      * @param string $endTime 结束时间
-     * @param $userId
+     * @param int|array $orderUserId 订单用户
+     * @param int|array $userId 返利用户
+     * @param int $equalUser 订单用户和返利用户是否相同
      * @param int $settlement 是否计算结算
      * @return array
      */
-    public function predict($startTime, $endTime, $userId, $settlement=0){
-        $params = [
-            'order_user_id' => $userId,
-            'user_id' => $userId
-        ];
+    public function predict($startTime, $endTime, $orderUserId, $userId, $equalUser=1, $settlement=0){
+        $params = [];
+
+        //返利用户id
+        if($userId){
+            $params['user_id'] = $userId;
+        }
+
+        //订单用户id
+        if($orderUserId){
+            $params['order_user_id'] = $orderUserId;
+        }
+
+        //返利用户和订单用户是否相等
+        if($equalUser){
+            $params['equal_user'] = 1;
+        }
 
         if($settlement){
             //结算时间
@@ -184,12 +243,19 @@ class StatisticsService
 
         //订单用户id
         if($orderUserId = UtilsHelper::arrayValue($queryParams, 'order_user_id')){
-            $query->where('income.order_user_id', '=', $orderUserId);
+            $orderUserId = is_array($orderUserId) ? $orderUserId : [$orderUserId];
+            $query->whereIn('income.order_user_id', $orderUserId);
         }
 
         //返利用户id
         if($userId = UtilsHelper::arrayValue($queryParams, 'user_id')){
-            $query->where('income.user_id', '=', $userId);
+            $userId = is_array($userId) ? $userId : [$userId];
+            $query->whereIn('income.user_id', $userId);
+        }
+
+        //返利用户和订单用户是否相同
+        if($equalUser = UtilsHelper::arrayValue($queryParams, 'equal_user')){
+            $query->whereRaw('income.user_id=income.order_user_id');
         }
 
         $query->select(["aliorder.id", "aliorder.order_state", "aliorder.pay_money", "aliorder.predict_money", "aliorder.settle_money", "aliorder.predict_income", "income.share_rate as user_rate"]);

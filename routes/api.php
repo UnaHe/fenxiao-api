@@ -91,12 +91,12 @@ Route::middleware('auth.api:force')->namespace('App\Http\Controllers')->group(fu
      * 报表
      * ================
      */
-    //查询指定日期订单信息
+    //查询用户指定日期订单信息
     Route::get('/statistics/day', "StatisticsController@day");
-    //查询查询月收益数据
+    //查询用户月收益数据
     Route::get('/statistics/month', "StatisticsController@month");
-
-
+    //查询团队月收益数据
+    Route::get('/statistics/team/month', "StatisticsController@teamMonth");
 
 
 
