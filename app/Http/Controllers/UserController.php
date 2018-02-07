@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\CaptchaService;
 use App\Services\UserService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cookie;
 
 class UserController extends Controller
 {
@@ -30,6 +31,22 @@ class UserController extends Controller
         }
 
         return $this->ajaxSuccess($token);
+    }
+
+    /**
+     * 注销登录
+     * @param Request $request
+     * @return static
+     */
+    public function logout(Request $request){
+        $token = Cookie::get('token')?:$request->header('token');
+        $token = $token ?: $request->input('token');
+
+        if(!(new UserService())->logout($token)){
+            return $this->ajaxError();
+        }
+
+        return $this->ajaxSuccess();
     }
 
     /**

@@ -149,6 +149,23 @@ class UserService
     }
 
     /**
+     * 注销登录
+     * @param string $token 需要注销的token
+     * @return bool
+     */
+    public function logout($token){
+        try{
+            $data = JWT::decode($token, config('app.key'), array('HS256'));
+            UserLoginToken::where("id", $data->sub)->delete();
+            return true;
+        }catch (\Exception $e){
+        }
+
+        return false;
+    }
+
+
+    /**
      * 验证登录token
      * @param $token
      * @return bool| User
