@@ -100,6 +100,17 @@ Route::middleware('auth.api:force')->namespace('App\Http\Controllers')->group(fu
     //查询用户团队奖励收入（团队提成）
     Route::get('/statistics/team/user_team_income', "StatisticsController@userTeamIncome");
 
+    /*
+     * ================
+     * 团队
+     * ================
+     */
+    //团队成员列表
+    Route::get('/team/user_list', "TeamController@userList");
+
+
+
+
 
 //    //获取消息列表
 //    Route::get('/messages', "MessageController@getMessageList");
