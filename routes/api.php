@@ -99,6 +99,8 @@ Route::middleware('auth.api:force')->namespace('App\Http\Controllers')->group(fu
     Route::get('/statistics/team/month', "StatisticsController@teamMonth");
     //查询用户团队奖励收入（团队提成）
     Route::get('/statistics/team/userTeamIncome', "StatisticsController@userTeamIncome");
+    //查询用户订单列表
+    Route::get('/alimamaOrder/userOrderList', "AlimamaOrderController@userOrderList");
 
     /*
      * ================
@@ -107,7 +109,6 @@ Route::middleware('auth.api:force')->namespace('App\Http\Controllers')->group(fu
      */
     //团队成员列表
     Route::get('/team/userList', "TeamController@userList");
-
 
 
 

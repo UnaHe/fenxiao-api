@@ -192,8 +192,6 @@ class StatisticsService
 
         $result = $this->getOrders($params);
 
-        //系统扣款比例
-        $systemRate = 0.16;
         //预估收入
         $preMoneyTotal = 0;
         //付款订单数
@@ -208,10 +206,11 @@ class StatisticsService
 
         $orderIds = [];
 
+        $userService = new UserService();
         bcscale(5);
         foreach ($result as $item){
             //预估收入 = (订单预估 - 系统扣减手续费) * 用户分成比例
-            $preMoney = bcmul(bcmul($item[$incomeKey], (1 - $systemRate)), $item['user_rate']);
+            $preMoney = $userService->getUserMoney($item[$incomeKey], $item['user_rate']);
             $preMoneyTotal = bcadd($preMoneyTotal, $preMoney);
 
             if(!isset($orderIds[$item['id']])){

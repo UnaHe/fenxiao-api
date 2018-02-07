@@ -36,5 +36,23 @@ class AlimamaOrder extends Model
      */
     const ORDERSTATE_SUCCESS = 4;
 
+    /**
+     * 订单状态配置
+     * @var array
+     */
+    static $ORDERSTATE = [
+        self::ORDERSTATE_PAYED => '已付款',
+        self::ORDERSTATE_SETTLE => '已结算',
+        self::ORDERSTATE_INVALID => '已失效',
+        self::ORDERSTATE_SUCCESS => '订单成功',
+    ];
 
+    /**
+     * 获取订单状态字符串
+     * @param $orderState
+     * @return mixed|null
+     */
+    public static function getOrderStateStr($orderState){
+        return isset(self::$ORDERSTATE[$orderState]) ? self::$ORDERSTATE[$orderState] : null;
+    }
 }

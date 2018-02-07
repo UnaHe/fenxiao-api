@@ -69,4 +69,21 @@ class TeamService
         return $data;
     }
 
+    /**
+     * 查询下级用户是否在上级用户的指定层级团队内
+     * @param int $topUserId 上级用户id
+     * @param int $subUserId 下级用户id
+     * @param int $level 指定层级
+     * @return bool
+     */
+    public function userInTeam($topUserId, $subUserId, $level=2){
+        $user = UserTree::where("user_id", $topUserId)->first();
+
+        return UserTree::where([
+            ['left_val', ">", $user['left_val']],
+            ['right_val', "<", $user['right_val']],
+            ['level', "<=", $user['level']+$level],
+            ['user_id', '=', $subUserId]
+        ])->exists();
+    }
 }
