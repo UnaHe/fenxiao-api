@@ -119,7 +119,6 @@ class StatisticsService
      * @return array
      */
     public function userTeamIncome($userId){
-        $userId = 1243;
         $startMonth = Carbon::now()->startOfMonth()->startOfDay()->toDateTimeString();
         $endMonth = Carbon::now()->endOfMonth()->endOfDay()->toDateTimeString();
 
