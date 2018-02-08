@@ -16,7 +16,7 @@ class SyncOrder extends Command
      *
      * @var string
      */
-    protected $signature = 'sync_order {--from_time=} {--to_time=} {--file=}';
+    protected $signature = 'sync_order {--from_time=} {--to_time=} {--file=} {--update=} {--increase=}';
 
     /**
      * The console command description.
@@ -49,36 +49,128 @@ class SyncOrder extends Command
         $toTime = $this->option('to_time') ?: $nowDate;
         //指定文件
         $excelFile = $this->option('file');
+        //更新未结算订单
+        $update = $this->option('update');
+        //增量同步
+        $increase = $this->option('increase');
 
-        if(!$excelFile){
-            $downloadUrl = "http://pub.alimama.com/report/getTbkPaymentDetails.json?queryType=1&payStatus=&DownloadID=DOWNLOAD_REPORT_INCOME_NEW&startTime={$fromTime}&endTime={$toTime}";
 
-            $cookie = $this->getCookie();
-            if(!$cookie){
-                throw new \Exception("获取cookie失败");
-            }
-
-            $client = (new \GuzzleHttp\Client([
-                'headers' => [
-                    'cookie' => $cookie,
-                ]
-            ]));
-
-            $dir = storage_path("download");
-            if(!is_dir($dir)){
-                @mkdir($dir);
-            }
-            $file = $dir."/order_".time().mt_rand(1000, 9999).".xls";
-            $client->get($downloadUrl, ['save_to' => $file]);
-        }else{
+        //未结算订单同步
+        if($update){
+            $this->syncNotSettled();
+        }
+        //增量同步
+        else if($increase){
+            $this->syncIncrease();
+        }
+        //同步指定文件
+        else if($excelFile){
             $file = storage_path("download/".$excelFile);
+            if(!is_file($file)){
+                throw new \Exception("文件不存在");
+            }
+            $this->importFile($file);
         }
+        //同步指定时间
+        else{
+            $this->syncFromTime($fromTime, $toTime);
+        }
+    }
 
 
+    /**
+     * 增量同步
+     */
+    public function syncIncrease(){
+        $time = Carbon::now()->startOfDay()->toDateTimeString();
+        $lastCreateTime = AlimamaOrder::where("create_time", ">=", $time)->max("create_time");
+        $lastCreateTime = $lastCreateTime ?: $time;
+
+        $this->syncFromTime($lastCreateTime, Carbon::now()->toDateTimeString());
+    }
+
+    /**
+     * 按时间同步
+     * @param $fromTime
+     * @param $toTime
+     * @throws \Exception
+     */
+    public function syncFromTime($fromTime, $toTime){
+        $file = $this->downloadFile($fromTime, $toTime);
         if(!is_file($file)){
-            throw new \Exception("文件下载失败");
+            throw new \Exception("文件不存在");
+        }
+        $this->importFile($file);
+    }
+
+    /**
+     * 同步未结算订单
+     */
+    public function syncNotSettled(){
+        //时间区间
+        $timeRanges = [];
+        $notSettledTimes = AlimamaOrder::where('order_state', AlimamaOrder::ORDERSTATE_PAYED)->orderBy("create_time", "desc")->pluck("create_time")->toArray();
+        foreach ($notSettledTimes as $settledTime){
+            $time = new Carbon($settledTime);
+            $date = $time->toDateString();
+            if(!isset($timeRanges[$date])){
+                $timeRanges[$date] = [];
+            }
+            $timeRanges[$date][] = $time->toDateTimeString();
         }
 
+        foreach ($timeRanges as $range){
+            $count = count($range);
+            $toTime = $range[0];
+            $fromTime = $range[$count-1];
+            //开始时间和结束相同，则结束时间+1s
+            if($count == 1){
+                $toTime = (new Carbon($toTime))->addSecond(1)->toDateTimeString();
+            }
+            $this->syncFromTime($fromTime, $toTime);
+        }
+    }
+
+    /**
+     * 下载文件
+     * @param $fromTime
+     * @param $toTime
+     * @return string
+     * @throws \Exception
+     */
+    public function downloadFile($fromTime, $toTime){
+        $downloadUrl = "http://pub.alimama.com/report/getTbkPaymentDetails.json?queryType=1&payStatus=&DownloadID=DOWNLOAD_REPORT_INCOME_NEW&startTime={$fromTime}&endTime={$toTime}";
+
+        $cookie = $this->getCookie();
+        if(!$cookie){
+            throw new \Exception("获取cookie失败");
+        }
+
+        $client = (new \GuzzleHttp\Client([
+            'headers' => [
+                'cookie' => $cookie,
+            ]
+        ]));
+
+        $dir = storage_path("download");
+        if(!is_dir($dir)){
+            @mkdir($dir);
+        }
+        $file = $dir."/order_".time().mt_rand(1000, 9999).".xls";
+        $response = $client->get($downloadUrl, ['save_to' => $file]);
+        //下载文件类型错误，删除文件
+        if(strpos($response->getHeader('Content-Type')[0], "application/vnd.ms-excel") === false){
+            @unlink($file);
+        }
+
+        return $file;
+    }
+
+    /**
+     * 导入文件
+     * @param $file
+     */
+    public function importFile($file){
         $content = Excel::load($file)->get()->toArray();
 
         $orders = [];
@@ -187,7 +279,6 @@ class SyncOrder extends Command
 
         //删除文件
         @unlink($file);
-
     }
 
     /**
