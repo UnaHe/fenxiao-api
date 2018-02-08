@@ -82,14 +82,17 @@ class SettleOrder extends Command
                 foreach ($users as $user){
                     $money = $userService->getUserMoney($orderIncome, $user['share_rate']);
                     $money = round($money, 2);
-                    $totalMoney += $money;
 
-                    if(!$userService->addBalance($user['user_id'], $money, "订单结算奖励")){
-                        $msg = $user['user_id']." 返利失败";
-                        $this->error($msg);
-                        throw new \Exception($msg);
+                    if($money){
+                        $totalMoney += $money;
+
+                        if(!$userService->addBalance($user['user_id'], $money, "订单结算奖励")){
+                            $msg = $user['user_id']." 返利失败";
+                            $this->error($msg);
+                            throw new \Exception($msg);
+                        }
+                        $this->info($user['user_id']." 返利".$money);
                     }
-                    $this->info($user['user_id']." 返利".$money);
                 }
 
                 //修改订单为结算状态
