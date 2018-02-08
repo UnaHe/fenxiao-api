@@ -10,6 +10,7 @@ namespace App\Services;
 use App\Events\RegisterUserEvent;
 use App\Helpers\BaseConvert;
 use App\Models\SystemPids;
+use App\Models\UserBill;
 use App\Models\UserLoginToken;
 use App\Models\UserReferralCode;
 use App\Models\UserTree;
@@ -289,6 +290,63 @@ class UserService
         //预估收入 = (订单预估 - 系统扣减手续费) * 用户分成比例
         bcscale(5);
         return bcmul(bcmul($money, (1 - $systemRate)), $rate);
+    }
+
+    /**
+     * 增加用户余额
+     * @param int $userId 用户id
+     * @param float $amount 金额
+     * @param string $comment 备注
+     * @return bool
+     */
+    public function addBalance($userId, $amount, $comment){
+        DB::beginTransaction();
+        try{
+            if(!User::where("id", $userId)->increment("balance", $amount)){
+                throw new \Exception("更新用户余额失败");
+            }
+            UserBill::create([
+                'user_id' => $userId,
+                'amount' => $amount,
+                'comment' => $comment,
+                'type' => 1,
+                'add_time' => Carbon::now(),
+            ]);
+        }catch (\Exception $e){
+            DB::rollBack();
+            return false;
+        }
+
+        DB::commit();
+        return true;
+    }
+
+    /**
+     * 减少用户余额
+     * @param int $userId 用户id
+     * @param float $amount 金额
+     * @param string $comment 备注
+     * @return bool
+     */
+    public function subBalance($userId, $amount, $comment){
+        DB::beginTransaction();
+        try{
+            if(!User::where("id", $userId)->decrement("balance", $amount)){
+                throw new \Exception("更新用户余额失败");
+            }
+            UserBill::create([
+                'user_id' => $userId,
+                'amount' => -$amount,
+                'comment' => $comment,
+                'type' => 0
+            ]);
+        }catch (\Exception $e){
+            DB::rollBack();
+            return false;
+        }
+
+        DB::commit();
+        return true;
     }
 
 }
