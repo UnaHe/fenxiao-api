@@ -36,11 +36,10 @@ class CommissionService
         }
 
         //所有佣金金额
-        $commissionAmountFull = bcmul($usedPrice, $goods['commission']/100, 2);
-        //扣除手续费后的佣金金额
-        $commissionAmount = bcmul($commissionAmountFull, 0.84, 2);
+        $commissionAmountFull = bcmul($usedPrice, $goods['commission']/100, 5);
         //用户实际佣金金额
-        $commissionAmountUser = bcmul($commissionAmount, $this->userRate, 2);
+        $commissionAmountUser = (new UserService())->getUserMoney($commissionAmountFull, $this->userRate);
+        $commissionAmountUser = intval($commissionAmountUser*100)/100;
 
         return $commissionAmountUser;
     }

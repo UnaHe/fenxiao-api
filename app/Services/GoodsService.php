@@ -464,7 +464,7 @@ class GoodsService
         }
 
         $commissionService = new CommissionService($userId);
-        $data['pic'] = (new GoodsHelper())->resizePic($data['pic'], '240x240');
+        $data['pic'] = (new GoodsHelper())->resizePic($data['pic'], '480x480');
         //用户返利金额
         $data['commission_amount'] = $commissionService->goodsCommisstion($data);
 
