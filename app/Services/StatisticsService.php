@@ -207,15 +207,14 @@ class StatisticsService
         $orderIds = [];
 
         $userService = new UserService();
-        bcscale(5);
         foreach ($result as $item){
             //预估收入 = (订单预估 - 系统扣减手续费) * 用户分成比例
             $preMoney = $userService->getUserMoney($item[$incomeKey], $item['user_rate']);
-            $preMoneyTotal = bcadd($preMoneyTotal, $preMoney);
+            $preMoneyTotal = bcadd($preMoneyTotal, $preMoney, 5);
 
             if(!isset($orderIds[$item['id']])){
                 $payOrderNum++;
-                $payMoneyTotal = bcadd($payMoneyTotal, $item[$moneyKey]);
+                $payMoneyTotal = bcadd($payMoneyTotal, $item[$moneyKey], 5);
                 $orderIds[$item['id']] = $item;
             }
         }
