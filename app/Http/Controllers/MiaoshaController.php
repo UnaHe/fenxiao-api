@@ -45,6 +45,7 @@ class MiaoshaController extends Controller
         }
 
         $params = $request->all();
+        $params['user_id'] = $request->user()->id;
         if(!$data = CacheHelper::getCache($params)){
             $data = (new ChannelColumnService())->miaoshaGoods($activeTime, $request->user()->id);
             CacheHelper::setCache($data, 5, $params);

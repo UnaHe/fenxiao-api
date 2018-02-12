@@ -149,6 +149,8 @@ class GoodsController extends Controller
 
         $params = $request->all();
         $params['column_code'] = $columnCode;
+        $params['user_id'] = $request->user()->id;
+
         if(!$list = CacheHelper::getCache($params)){
             $list = (new GoodsService())->columnGoodList($columnCode, $queryParams, $sort, $request->user()->id);
             CacheHelper::setCache($list, 1, $params);
@@ -202,6 +204,7 @@ class GoodsController extends Controller
         }
 
         $params = $request->all();
+        $params['user_id'] = $request->user()->id;
         if(!$list = CacheHelper::getCache($params)){
             $list = (new GoodsService())->queryAllGoods($queryParams, $page, $limit, $sort, $request->user()->id);
             CacheHelper::setCache($list, 1, $params);
