@@ -84,6 +84,8 @@ Route::middleware('auth.api:force')->namespace('App\Http\Controllers')->group(fu
     Route::post('/logout', "UserController@logout");
     //提现申请
     Route::post('/user/withdraw', "UserController@withdraw");
+    //支付宝绑定
+    Route::post('/user/alipay', "ThirdAccountController@saveAlipay");
 
 
     /*
