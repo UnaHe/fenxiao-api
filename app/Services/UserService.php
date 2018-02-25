@@ -10,6 +10,7 @@ namespace App\Services;
 use App\Events\RegisterUserEvent;
 use App\Helpers\BaseConvert;
 use App\Models\SystemPids;
+use App\Models\ThirdAccount;
 use App\Models\UserBill;
 use App\Models\UserLoginToken;
 use App\Models\UserReferralCode;
@@ -258,6 +259,8 @@ class UserService
             ->select(["user.id", "user.mobile", "tree.grade"])
             ->where("user.id", $userId)->first();
 
+        $isBindAlipay = ThirdAccount::where(['user_id' => $userId])->whereNotNull("alipay_account")->exists();
+
         $grade = $user['grade'];
         $gradeInfo = (new UserGradeService())->getGrade($grade);
         $data = [
@@ -265,6 +268,7 @@ class UserService
             'mobile' => $user['mobile'],
             'grade' => $grade,
             'grade_str' => $gradeInfo['grade_name'],
+            'is_bind_alipay' => intval($isBindAlipay)
         ];
 
         return $data;
