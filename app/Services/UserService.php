@@ -14,6 +14,7 @@ use App\Models\UserBill;
 use App\Models\UserLoginToken;
 use App\Models\UserReferralCode;
 use App\Models\UserTree;
+use App\Models\Withdraw;
 use Carbon\Carbon;
 use Firebase\JWT\JWT;
 use Illuminate\Support\Facades\DB;
@@ -330,14 +331,18 @@ class UserService
     public function subBalance($userId, $amount, $comment){
         DB::beginTransaction();
         try{
-            if(!User::where("id", $userId)->decrement("balance", $amount)){
+            if(!User::where([
+                ["id", '=', $userId],
+                ["balance", '>=', $amount],
+            ])->decrement("balance", $amount)){
                 throw new \Exception("更新用户余额失败");
             }
             UserBill::create([
                 'user_id' => $userId,
                 'amount' => -$amount,
                 'comment' => $comment,
-                'type' => 0
+                'type' => 0,
+                'add_time' => Carbon::now(),
             ]);
         }catch (\Exception $e){
             DB::rollBack();
@@ -348,4 +353,33 @@ class UserService
         return true;
     }
 
+    /**
+     * 提现申请
+     * @param int $userId 用户id
+     * @param float $amount 提现金额
+     */
+    public function withdraw($userId, $amount){
+        $balance = $this->balance($userId);
+        if($amount > $balance){
+            throw new \Exception("余额不足");
+        }
+
+        try{
+            DB::beginTransaction();
+            if(!$this->subBalance($userId, $amount, "提现申请")){
+                throw new \Exception("提现失败");
+            }
+            Withdraw::create([
+                'user_id' => $userId,
+                'amount' => $amount,
+                'status' => Withdraw::STATUS_APPLY,
+                'add_time' => Carbon::now()
+            ]);
+            DB::commit();
+        }catch (\Exception $e){
+            DB::rollBack();
+            return false;
+        }
+        return true;
+    }
 }

@@ -200,5 +200,32 @@ class UserController extends Controller
             'balance' => $data
         ]);
     }
-    
+
+    /**
+     * 提现申请
+     * @param Request $request
+     * @return static
+     */
+    public function withdraw(Request $request){
+        //提现金额
+        $amount = $request->post('amount');
+        if(!is_numeric($amount)){
+            return $this->ajaxError("参数格式错误");
+        }
+
+        if($amount <= 0){
+            return $this->ajaxError("提现金额必须大于0");
+        }
+
+        try{
+            if(!(new UserService())->withdraw($request->user()->id, $amount)){
+                throw new \Exception("提现失败, 请重试");
+            }
+        }catch (\Exception $e){
+            return $this->ajaxError($e->getMessage());
+        }
+
+        return $this->ajaxSuccess();
+    }
+
 }

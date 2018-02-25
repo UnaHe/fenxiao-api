@@ -82,6 +82,8 @@ Route::middleware('auth.api:force')->namespace('App\Http\Controllers')->group(fu
     Route::get('/user/balance', "UserController@balance");
     //用户余额查询
     Route::post('/logout', "UserController@logout");
+    //提现申请
+    Route::post('/user/withdraw', "UserController@withdraw");
 
 
     /*
