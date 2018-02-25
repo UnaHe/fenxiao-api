@@ -58,6 +58,9 @@ Route::middleware('auth.api')->namespace('App\Http\Controllers')->group(function
     //提交意见反馈
     Route::post('/feedback', "FeedbackController@feedback");
 
+    //公告列表
+    Route::get('/notice', "NoticeController@getNotice");
+
 });
 
 
