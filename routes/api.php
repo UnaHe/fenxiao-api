@@ -125,6 +125,11 @@ Route::middleware('auth.api:force')->namespace('App\Http\Controllers')->group(fu
 
 
 
+    /*
+     * ================
+     * 通知消息
+     * ================
+     */
     //获取消息列表
     Route::get('/messages', "MessageController@getMessageList");
     //获取消息详情
@@ -134,6 +139,8 @@ Route::middleware('auth.api:force')->namespace('App\Http\Controllers')->group(fu
     //获取未读消息数量
     Route::get('/messages/unReadNum', "MessageController@unReadNum");
 
+    //直升等级申请
+    Route::post('/upgrade/apply', "ApplyUpgradeController@addApply");
 
 });
 
