@@ -123,15 +123,14 @@ Route::middleware('auth.api:force')->namespace('App\Http\Controllers')->group(fu
 
 
 
-//    //获取消息列表
-//    Route::get('/messages', "MessageController@getMessageList");
-//    //获取消息详情
-//    Route::get('/messages/{messageId}', "MessageController@getMessage")->where('messageId', '[0-9]+');
-//    //删除消息
-//    Route::delete('/messages/{messageId}', "MessageController@deleteMessage")->where('messageId', '[0-9]+');
-//    //获取未读消息数量
-//    Route::get('/messages/unReadNum', "MessageController@unReadNum");
-
+    //获取消息列表
+    Route::get('/messages', "MessageController@getMessageList");
+    //获取消息详情
+    Route::get('/messages/detail', "MessageController@getMessage");
+    //删除消息
+    Route::post('/messages/del', "MessageController@deleteMessage");
+    //获取未读消息数量
+    Route::get('/messages/unReadNum', "MessageController@unReadNum");
 
 
 });

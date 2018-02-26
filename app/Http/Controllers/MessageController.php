@@ -21,11 +21,14 @@ class MessageController extends Controller
 
     /**
      * 获取消息详情, 并标记消息为已读
-     * @param $messageId
      */
-    public function getMessage(Request $request, $messageId){
+    public function getMessage(Request $request){
+        $messageId = $request->post('id');
+        if(!$messageId){
+            return $this->ajaxError("参数错误");
+        }
         try{
-            $data = (new MessageService())->read($request->user()->id, $messageId);
+            $data = (new MessageService())->detail($request->user()->id, $messageId);
         }catch (\Exception $e){
             return $this->ajaxError($e->getMessage());
         }
@@ -36,7 +39,8 @@ class MessageController extends Controller
      * 删除消息
      * @param $messageId
      */
-    public function deleteMessage(Request $request, $messageId){
+    public function deleteMessage(Request $request){
+        $messageId = $request->post('id');
         try{
             $data = (new MessageService())->delete($request->user()->id, $messageId);
         }catch (\Exception $e){

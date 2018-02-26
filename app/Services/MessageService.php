@@ -9,7 +9,10 @@ namespace App\Services;
 
 use App\Helpers\QueryHelper;
 use App\Models\Message;
+use App\Models\User;
 use App\Models\UserMessage;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class MessageService
 {
@@ -19,40 +22,37 @@ class MessageService
      * @return array
      */
     public function getMessages($userId){
-        //已删除的消息
-        $userDeleteMsgIds = UserMessage::where(['user_id'=>$userId, 'is_delete'=>1])->pluck('message_id')->toArray();
+        //用户注册时间
+        $userRegTime = User::where("id", $userId)->select("reg_time")->pluck("reg_time")->first();
 
-        $query = Message::where(['is_delete'=>0])->whereNotIn('id', $userDeleteMsgIds);
-        //查询消息基础信息
+        $query = Message::query()->from((new Message())->getTable().' as msg')
+            ->leftJoin((new UserMessage())->getTable().' as umsg', function($join) use($userId){
+                $join->on("msg.id", "=", "umsg.message_id");
+                $join->on("umsg.user_id", "=", DB::raw($userId));
+            })
+            ->select(["msg.id", "msg.title", "msg.create_time", DB::raw("ifnull(umsg.is_read, 0) as is_read")]);
+
+        //消息发送时间大于用户注册时间
+        $query->where("msg.create_time", ">=", $userRegTime);
+
+        //属于用户的消息
         $query->where(function($query) use($userId){
-            //私信
-            $query->where(function($query) use($userId){
-                $query->where('type', Message::MSG_TYPE_PRIVATE);
-                $query->where('to_user_id', $userId);
-            });
-            //广播类型
-            $query->orWhere(function($query) use($userId){
-                $query->where('type', Message::MSG_TYPE_BROADCAST);
-            });
+            $query->where('msg.to_user_id', $userId);
+            $query->orWhere('msg.to_user_id', 0);
+        });
+        $query->where(function($query) use($userId){
+            $query->where('umsg.user_id', $userId);
+            $query->orWhereNull('umsg.user_id');
         });
 
-        $list = (new QueryHelper())->pagination($query)->get();
+        //系统未删除
+        $query->where("msg.is_delete", 0);
+        //用户未删除
+        $query->whereNull("umsg.delete_time");
 
-        $messages = $list->toArray();
-        $messageIds = $list->pluck('id')->toArray();
+        $query->orderBy("msg.create_time", "desc");
 
-        //查询是否已读
-        $readedIds = UserMessage::whereIn('message_id', $messageIds)->where(['is_read'=>1, 'user_id'=> $userId])->pluck('message_id')->toArray();
-
-        foreach ($messages as &$item){
-            unset($item['is_delete']);
-            unset($item['update_time']);
-            unset($item['type']);
-            $item['is_read'] = 0;
-            if(in_array($item['id'], $readedIds)){
-                $item['is_read'] = 1;
-            }
-        }
+        $messages = (new QueryHelper())->pagination($query)->get();
 
         return $messages;
     }
@@ -64,10 +64,16 @@ class MessageService
      * @param $messageId
      * @return array
      */
-    public function read($userId, $messageId){
+    public function detail($userId, $messageId){
         $message = $this->getUserMessage($userId, $messageId);
         $this->updateUserMessage($userId, $messageId, 1);
-        return $message;
+        $data = [
+            'id' => $message['id'],
+            'title' => $message['title'],
+            'content' => $message['content'],
+            'create_time' => $message['create_time'],
+        ];
+        return $data;
     }
 
     /**
@@ -99,8 +105,8 @@ class MessageService
 
     /**
      * 更新用户消息状态
-     * @param $userId 用户id
-     * @param $messageId 消息id
+     * @param int $userId 用户id
+     * @param int $messageId 消息id
      * @param int $isRead 是否已读
      * @param int $isDelete 是否删除
      */
@@ -110,7 +116,7 @@ class MessageService
             $userMessage = new UserMessage();
         }
 
-        $time = date('Y-m-d H:i:s');
+        $time = Carbon::now();
         //是否需要保存
         $isSave = false;
 
@@ -140,22 +146,28 @@ class MessageService
      * @param $userId
      */
     public function unReadNum($userId){
-        //已读已删除的消息
-        $userDeleteMsgIds = UserMessage::where(['user_id'=>$userId])->pluck('message_id')->toArray();
+        //用户注册时间
+        $userRegTime = User::where("id", $userId)->select("reg_time")->pluck("reg_time")->first();
 
-        $query = Message::where(['is_delete'=>0])->whereNotIn('id', $userDeleteMsgIds);
-        //查询消息基础信息
+        $query = Message::query()->from((new Message())->getTable().' as msg')
+            ->leftJoin((new UserMessage())->getTable().' as umsg', function($join) use($userId){
+                $join->on("msg.id", "=", "umsg.message_id");
+                $join->on("umsg.user_id", "=", DB::raw($userId));
+            });
+
+        //消息发送时间大于用户注册时间
+        $query->where("msg.create_time", ">=", $userRegTime);
+
+        //属于用户的消息
         $query->where(function($query) use($userId){
-            //私信
-            $query->where(function($query) use($userId){
-                $query->where('type', Message::MSG_TYPE_PRIVATE);
-                $query->where('to_user_id', $userId);
-            });
-            //广播类型
-            $query->orWhere(function($query) use($userId){
-                $query->where('type', Message::MSG_TYPE_BROADCAST);
-            });
+            $query->where('msg.to_user_id', $userId);
+            $query->orWhere('msg.to_user_id', 0);
         });
+
+        //系统未删除
+        $query->where("msg.is_delete", 0);
+        //用户未读未删除
+        $query->whereNull("umsg.user_id");
 
         return ['un_read'=> $query->count()];
     }
