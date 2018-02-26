@@ -37,7 +37,6 @@ class RouteServiceProvider extends ServiceProvider
     {
         $this->mapApiRoutes();
         $this->mapWebRoutes();
-        $this->mapWapRoutes();
 
         //
     }
@@ -69,18 +68,4 @@ class RouteServiceProvider extends ServiceProvider
              ->group(base_path('routes/api.php'));
     }
 
-    /**
-     * Define the "wap" routes for the application.
-     *
-     * These routes are typically stateless.
-     *
-     * @return void
-     */
-
-    protected function mapWapRoutes()
-    {
-        // 朋友淘wap路由.
-        Route::prefix('pytao')
-            ->group(base_path('routes/pytao.php'));
-    }
 }
