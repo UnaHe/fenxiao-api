@@ -35,4 +35,14 @@ class ThirdAccountService
         }
         return true;
     }
+
+    /**
+     * 查询绑定的支付宝
+     * @param $userId
+     * @return bool
+     */
+    public function getAlipay($userId){
+        $model = ThirdAccount::where(['user_id' => $userId])->select(['alipay_real_name', 'alipay_account'])->first();
+        return $model;
+    }
 }

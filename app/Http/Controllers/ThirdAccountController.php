@@ -29,4 +29,15 @@ class ThirdAccountController extends Controller
         return $this->ajaxSuccess();
     }
 
+    /**
+     * 查询绑定的支付宝
+     * @param Request $request
+     * @return static
+     */
+    public function getAlipay(Request $request){
+        $userId = $request->user()->id;
+        $data = (new ThirdAccountService())->getAlipay($userId);
+        return $this->ajaxSuccess($data);
+    }
+
 }
