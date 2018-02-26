@@ -141,6 +141,9 @@ Route::middleware('auth.api:force')->namespace('App\Http\Controllers')->group(fu
 
     //直升等级申请
     Route::post('/upgrade/apply', "ApplyUpgradeController@addApply");
+    //挂机续费申请
+    Route::post('/guaji/apply', "GuajiController@addApply");
+
 
 });
 
