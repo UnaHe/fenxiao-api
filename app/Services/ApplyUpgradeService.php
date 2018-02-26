@@ -15,16 +15,16 @@ class ApplyUpgradeService
     /**
      * 提交直升等级申请
      * @param int $userId 用户id
-     * @param int $type 升级类型
+     * @param int $grade 升级等级
      * @param string $mobile 需要升级的账号
      * @param string $alipayAccount 付款支付宝账号
      * @return bool
      */
-    public function addApply($userId, $type, $mobile, $alipayAccount){
+    public function addApply($userId, $grade, $mobile, $alipayAccount){
         $isSuccess = ApplyUpgrade::create([
             'mobile' => $mobile,
             'alipay_account' => $alipayAccount,
-            'type' => $type,
+            'grade' => $grade,
             'user_id' => $userId,
             'status' => 0,
             'add_time' => Carbon::now()

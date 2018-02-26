@@ -12,14 +12,14 @@ class ApplyUpgradeController extends Controller
      * @param Request $request
      */
     public function addApply(Request $request){
-        $type = $request->post('type');
+        $grade = $request->post('grade');
         $mobile = $request->post('mobile');
         $alipayAccount = $request->post('alipay_account');
-        if(!$type || !$mobile || !$alipayAccount){
+        if(!$grade || !$mobile || !$alipayAccount){
             return $this->ajaxError("参数错误");
         }
 
-        if(!(new ApplyUpgradeService())->addApply($request->user()->id, $type, $mobile, $alipayAccount)){
+        if(!(new ApplyUpgradeService())->addApply($request->user()->id, $grade, $mobile, $alipayAccount)){
             return $this->ajaxError("申请失败");
         }
 
