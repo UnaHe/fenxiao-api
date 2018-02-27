@@ -59,16 +59,16 @@ class UserController extends Controller
         $codeId = $request->post('codeId');
         $captcha = $request->post('captcha');
 
-        if(!$mobile || !$password || !$codeId){
-            return $this->ajaxError("参数错误");
-        }
-        if(!preg_match('/^1\d{10}$/', $mobile)){
-            return $this->ajaxError('请输入正确的手机号码');
-        }
-        if(strlen($password) < 6){
-            return $this->ajaxError('密码长度至少为6位');
-        }
-
+//        if(!$mobile || !$password || !$codeId){
+//            return $this->ajaxError("参数错误");
+//        }
+//        if(!preg_match('/^1\d{10}$/', $mobile)){
+//            return $this->ajaxError('请输入正确的手机号码');
+//        }
+//        if(strlen($password) < 6){
+//            return $this->ajaxError('密码长度至少为6位');
+//        }
+//
 //        if(!(new CaptchaService())->checkSmsCode($codeId, $captcha)){
 //            return $this->ajaxError("验证码错误");
 //        }
