@@ -24,8 +24,6 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        //每10分钟刷新淘宝token
-        $schedule->command('refresh_taobao_token')->everyTenMinutes();
     }
 
     /**
