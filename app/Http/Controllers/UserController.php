@@ -69,9 +69,9 @@ class UserController extends Controller
             return $this->ajaxError('密码长度至少为6位');
         }
 
-        if(!(new CaptchaService())->checkSmsCode($codeId, $captcha)){
-            return $this->ajaxError("验证码错误");
-        }
+//        if(!(new CaptchaService())->checkSmsCode($codeId, $captcha)){
+//            return $this->ajaxError("验证码错误");
+//        }
 
         try{
             (new UserService())->registerUser($mobile, $password, $inviteCode);
