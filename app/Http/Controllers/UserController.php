@@ -167,7 +167,7 @@ class UserController extends Controller
         }
 
         // 拼接邀请链接
-        $longUrl = 'http://'.config('domains.pytao_domains').'/register?u='.$code."&t=".time();
+        $longUrl = 'http://'.config('domains.pytao_domains').'/ShareReg?code='.$code."&t=".time();
         // 短链接.
         $shortUrl = (new UrlHelper())->shortUrl($longUrl);
 
