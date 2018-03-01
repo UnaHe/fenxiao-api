@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ValidateHelper;
 use App\Services\ThirdAccountService;
 use Illuminate\Http\Request;
 
@@ -22,6 +23,14 @@ class ThirdAccountController extends Controller
         if(!$name || !$account){
             return $this->ajaxError("参数错误");
         }
+
+        if(!ValidateHelper::isChineseName($name)){
+            return $this->ajaxError("姓名格式错误");
+        }
+        if(!ValidateHelper::isAlipayAccount($account)){
+            return $this->ajaxError("支付宝账号格式错误");
+        }
+
         if(!(new ThirdAccountService())->saveAlipay($userId, $name, $account)){
             return $this->ajaxError("绑定失败");
         }
