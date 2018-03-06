@@ -47,7 +47,7 @@ trait AjaxResponse
      * @return static
      */
     protected function ajaxReturn($data){
-        $data = json_encode($data, JSON_NUMERIC_CHECK);
+        $data = json_encode($data);
         $data = str_replace(":null", ':""', $data);
         $data = json_decode($data, true);
         $response = JsonResponse::create($data);
