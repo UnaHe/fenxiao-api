@@ -730,12 +730,6 @@ class GoodsService
             //分享描述
             $data['share_desc'] = (new GoodsService())->getShareDesc($shareData);
 
-            if(strlen($data['video_info'])>2){
-                $videoInfo = json_decode($data['video_info'], true);
-                $videoInfo['thumb'] = (new GoodsHelper())->resizePic($videoInfo['thumb'], '240x240');
-                $data['video_info'] = json_encode($videoInfo);
-            }
-
             $data['pic'] = (new GoodsHelper())->resizePic($data['pic'], '240x240');
             //用户返利金额
             $data['commission_amount'] = $commissionService->goodsCommisstion($data);
