@@ -82,22 +82,28 @@ class StatisticsService
 
         $user = UserTree::where("user_id", $userId)->first();
 
-        //下两层团队成员id
+//        //下两层团队成员id
+//        $teamUserIds = UserTree::where([
+//            ['left_val', ">", $user['left_val']],
+//            ['right_val', "<", $user['right_val']],
+//            ['level', "<=", $user['level']+2],
+//        ])->pluck("user_id")->toArray();
+
+        //所有团队成员id
         $teamUserIds = UserTree::where([
             ['left_val', ">", $user['left_val']],
             ['right_val', "<", $user['right_val']],
-            ['level', "<=", $user['level']+2],
         ])->pluck("user_id")->toArray();
 
         //当月预估
-        $curMonthPredict = $this->predict($startMonth, $endMonth, $teamUserIds, null, 1);
+        $curMonthPredict = $this->predict($startMonth, $endMonth, $teamUserIds, $userId, 0);
         //上月预估
-        $lastMonthPredict = $this->predict($startOfLastMonth, $endOfLastMonth, $teamUserIds, null, 1);
+        $lastMonthPredict = $this->predict($startOfLastMonth, $endOfLastMonth, $teamUserIds, $userId, 0);
 
         //当月结算
-        $curMonthSettle = $this->predict($startMonth, $endMonth, $teamUserIds, null, 1,1);
+        $curMonthSettle = $this->predict($startMonth, $endMonth, $teamUserIds, $userId, 0,1);
         //上月结算
-        $lastMonthSettle = $this->predict($startOfLastMonth, $endOfLastMonth, $teamUserIds, null, 1,1);
+        $lastMonthSettle = $this->predict($startOfLastMonth, $endOfLastMonth, $teamUserIds, $userId, 0,1);
 
         $data = [
             'predict' => [

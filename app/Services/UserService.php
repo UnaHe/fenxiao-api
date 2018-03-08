@@ -291,7 +291,7 @@ class UserService
      */
     public function getUserMoney($money, $rate){
         //系统扣款比例
-        $systemRate = 0.16;
+        $systemRate = 0;
         //预估收入 = (订单预估 - 系统扣减手续费) * 用户分成比例
         return bcmul(bcmul($money, (1 - $systemRate), 5), $rate, 5);
     }
