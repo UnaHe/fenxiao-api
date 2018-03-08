@@ -243,6 +243,12 @@ class GoodsService
                         $item[$key] = 1;
                     }
                 }
+
+                if(strlen($item['video_info'])>2){
+                    $videoInfo = json_decode($item['video_info'], true);
+                    $videoInfo['thumb'] = (new GoodsHelper())->resizePic($videoInfo['thumb'], '240x240');
+                    $item['video_info'] = json_encode($videoInfo);
+                }
                 $item['pic'] = (new GoodsHelper())->resizePic($item['pic'], '240x240');
                 //用户返利金额
                 $item['commission_amount'] = $commissionService->goodsCommisstion($item);
@@ -324,6 +330,12 @@ class GoodsService
         if($results){
             $commissionService = new CommissionService($userId);
             foreach ($results as &$item){
+                if(strlen($item['video_info'])>2){
+                    $videoInfo = json_decode($item['video_info'], true);
+                    $videoInfo['thumb'] = (new GoodsHelper())->resizePic($videoInfo['thumb'], '240x240');
+                    $item['video_info'] = json_encode($videoInfo);
+                }
+
                 $item['pic'] = (new GoodsHelper())->resizePic($item['pic'], '240x240');
                 //用户返利金额
                 $item['commission_amount'] = $commissionService->goodsCommisstion($item);
@@ -401,6 +413,12 @@ class GoodsService
         if($list){
             $commissionService = new CommissionService($userId);
             foreach ($list as &$item){
+                if(strlen($item['video_info'])>2){
+                    $videoInfo = json_decode($item['video_info'], true);
+                    $videoInfo['thumb'] = (new GoodsHelper())->resizePic($videoInfo['thumb'], '240x240');
+                    $item['video_info'] = json_encode($videoInfo);
+                }
+
                 $item['pic'] = (new GoodsHelper())->resizePic($item['pic'], '240x240');
                 //用户返利金额
                 $item['commission_amount'] = $commissionService->goodsCommisstion($item);
@@ -464,6 +482,12 @@ class GoodsService
         }
 
         $commissionService = new CommissionService($userId);
+        if(strlen($data['video_info'])>2){
+            $videoInfo = json_decode($data['video_info'], true);
+            $videoInfo['thumb'] = (new GoodsHelper())->resizePic($videoInfo['thumb'], '480x480');
+            $data['video_info'] = json_encode($videoInfo);
+        }
+
         $data['pic'] = (new GoodsHelper())->resizePic($data['pic'], '480x480');
         //用户返利金额
         $data['commission_amount'] = $commissionService->goodsCommisstion($data);
@@ -705,6 +729,12 @@ class GoodsService
             ];
             //分享描述
             $data['share_desc'] = (new GoodsService())->getShareDesc($shareData);
+
+            if(strlen($data['video_info'])>2){
+                $videoInfo = json_decode($data['video_info'], true);
+                $videoInfo['thumb'] = (new GoodsHelper())->resizePic($videoInfo['thumb'], '240x240');
+                $data['video_info'] = json_encode($videoInfo);
+            }
 
             $data['pic'] = (new GoodsHelper())->resizePic($data['pic'], '240x240');
             //用户返利金额
