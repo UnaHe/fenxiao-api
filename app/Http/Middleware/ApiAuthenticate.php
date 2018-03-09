@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\SysConfigService;
 use App\Services\UserService;
 use Carbon\Carbon;
 use Closure;
@@ -85,10 +86,11 @@ class ApiAuthenticate
         if(in_array("force", $guards)){
             throw new AuthenticationException('Unauthenticated.', $guards);
         }else{
-            $request->setUserResolver(function(){
-                return new class(){
-                    public $id = 0;
-                };
+            $visitorAccount = (new SysConfigService())->get('visitor_account', 0);
+            $request->setUserResolver(function() use($visitorAccount){
+                $user = new \stdClass();
+                $user->id = $visitorAccount;
+                return $user;
             });
         }
     }
