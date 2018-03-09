@@ -43,6 +43,13 @@ Route::middleware('auth.api')->namespace('App\Http\Controllers')->group(function
     //全网搜索
     Route::get('/queryAllGoods', "GoodsController@queryAllGoods");
 
+    /*
+     * ================
+     * 商品
+     * ================
+     */
+    //商品转链
+    Route::post('/transferLink', "TransferController@transferLink");
 
     /*
      * ================
@@ -89,13 +96,6 @@ Route::middleware('auth.api:force')->namespace('App\Http\Controllers')->group(fu
     //查询绑定支付宝
     Route::get('/user/alipay', "ThirdAccountController@getAlipay");
 
-    /*
-     * ================
-     * 商品
-     * ================
-     */
-    //商品转链
-    Route::post('/transferLink', "TransferController@transferLink");
 
 
     /*
