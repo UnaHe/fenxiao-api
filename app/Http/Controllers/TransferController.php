@@ -6,6 +6,7 @@ use App\Models\ChannelColumn;
 use App\Models\Goods;
 use App\Services\ChannelColumnService;
 use App\Services\GoodsService;
+use App\Services\SysConfigService;
 use App\Services\TransferService;
 use Illuminate\Database\Schema\Grammars\ChangeColumn;
 use Illuminate\Http\Request;
@@ -38,8 +39,14 @@ class TransferController extends Controller
             return $this->ajaxError("商品标题不能少于5个字");
         }
 
+        $userId = $request->user()->id;
+        //游客账号
+        if(!$userId){
+            $userId = (new SysConfigService())->get('visitor_account', 0);
+        }
+
         try{
-            $data = (new TransferService())->transferGoodsByUser($taobaoGoodsId, $couponId, $title, $description, $pic, $priceFull, $couponPrice, $sellNum, $request->user()->id);
+            $data = (new TransferService())->transferGoodsByUser($taobaoGoodsId, $couponId, $title, $description, $pic, $priceFull, $couponPrice, $sellNum, $userId);
         }catch (\Exception $e){
             $errorCode = $e->getCode();
             return $this->ajaxError($e->getMessage(), $errorCode ?: 300);

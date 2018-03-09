@@ -86,10 +86,9 @@ class ApiAuthenticate
         if(in_array("force", $guards)){
             throw new AuthenticationException('Unauthenticated.', $guards);
         }else{
-            $visitorAccount = (new SysConfigService())->get('visitor_account', 0);
-            $request->setUserResolver(function() use($visitorAccount){
+            $request->setUserResolver(function(){
                 $user = new \stdClass();
-                $user->id = $visitorAccount;
+                $user->id = 0;
                 return $user;
             });
         }
